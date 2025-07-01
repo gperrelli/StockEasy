@@ -150,7 +150,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="p-6 border-b border-border">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
           <div>
             <h1 className="text-xl font-bold text-primary flex items-center">
               <Package className="mr-2 h-6 w-6" />
@@ -160,14 +160,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               Pizzaria do João
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="lg:hidden"
-          >
-            <X className="h-5 w-5" />
-          </Button>
         </div>
       </div>
 
