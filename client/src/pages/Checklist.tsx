@@ -47,15 +47,15 @@ export default function Checklist() {
     queryKey: ["/api/checklists/executions"],
   });
 
+  const selectedTemplate = Array.isArray(templates) ? templates.find((t: any) => t.type === selectedType) : null;
+
   const { data: templateItems } = useQuery({
     queryKey: ["/api/checklists/templates", selectedTemplate?.id, "items"],
     enabled: !!selectedTemplate?.id,
   });
-
-  const selectedTemplate = templates?.find((t: any) => t.type === selectedType);
-  const currentExecution = executions?.find((e: any) => 
-    e.template.type === selectedType && !e.isCompleted
-  );
+  const currentExecution = Array.isArray(executions) ? executions.find((e: any) => 
+    e.template?.type === selectedType && !e.isCompleted
+  ) : null;
 
   const createExecutionMutation = useMutation({
     mutationFn: (templateId: number) =>
