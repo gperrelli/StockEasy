@@ -140,7 +140,14 @@ export default function Movements() {
 
   const openMovementDialog = (type: 'entrada' | 'saida' | 'ajuste') => {
     setSelectedMovementType(type);
-    form.setValue('type', type);
+    form.reset({
+      productId: 0,
+      type: type,
+      quantity: 1,
+      unitPrice: "",
+      totalPrice: "",
+      notes: "",
+    });
     setIsAddDialogOpen(true);
   };
 

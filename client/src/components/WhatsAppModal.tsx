@@ -11,10 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy, Info, Send, Phone } from "lucide-react";
+import { Copy, Info, Send, Phone, CheckCircle, AlertCircle } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface WhatsAppModalProps {
   open: boolean;
@@ -24,62 +26,43 @@ interface WhatsAppModalProps {
 export default function WhatsAppModal({ open, onClose }: WhatsAppModalProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [activeTab, setActiveTab] = useState("list");
+  const [activeTab, setActiveTab] = useState("bulk");
 
-  const { data: whatsappData, isLoading } = useQuery({
-    queryKey: ["/api/whatsapp/shopping-list"],
+  const { data: bulkData, isLoading, refetch } = useQuery({
+    queryKey: ["/api/whatsapp/generate-bulk-list"],
     enabled: open,
   });
 
-  const { data: suppliers, isLoading: suppliersLoading } = useQuery({
-    queryKey: ["/api/suppliers"],
-    enabled: open,
-  });
-
-  const sendMessageMutation = useMutation({
-    mutationFn: (data: { phoneNumber: string; message: string }) =>
-      apiRequest("POST", "/api/whatsapp/send-message", data),
-    onSuccess: () => {
-      toast({
-        title: "Mensagem enviada!",
-        description: "A lista foi enviada via WhatsApp Business API.",
-      });
-      setPhoneNumber("");
+  const sendDirectMutation = useMutation({
+    mutationFn: (supplierId: number) => apiRequest("POST", "/api/whatsapp/send-shopping-list", { supplierId }),
+    onSuccess: (data) => {
+      if (data.success) {
+        toast({
+          title: "Mensagem enviada!",
+          description: data.message,
+        });
+      } else {
+        toast({
+          title: "Mensagem gerada",
+          description: data.message,
+          variant: "destructive",
+        });
+      }
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
-        title: "Erro ao enviar mensagem",
-        description: error?.message || "Não foi possível enviar a mensagem.",
+        title: "Erro",
+        description: error.message || "Erro ao enviar mensagem",
         variant: "destructive",
       });
     },
   });
 
-  const sendShoppingListMutation = useMutation({
-    mutationFn: (data: { suppliers: Array<{ phoneNumber: string; supplierName: string }> }) =>
-      apiRequest("POST", "/api/whatsapp/send-shopping-list", data),
-    onSuccess: (data: any) => {
-      const { summary } = data;
-      toast({
-        title: "Listas enviadas!",
-        description: `${summary.sent} de ${summary.total} fornecedores receberam a lista.`,
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao enviar listas",
-        description: error?.message || "Não foi possível enviar as listas.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleCopyToClipboard = async () => {
-    if (!whatsappData?.text) return;
+  const handleCopyToClipboard = async (text: string) => {
+    if (!text) return;
 
     try {
-      await navigator.clipboard.writeText(whatsappData.text);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       toast({
         title: "Lista copiada!",
@@ -96,129 +79,179 @@ export default function WhatsAppModal({ open, onClose }: WhatsAppModalProps) {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!phoneNumber.trim() || !whatsappData?.text) return;
-    
-    sendMessageMutation.mutate({
-      phoneNumber: phoneNumber.trim(),
-      message: whatsappData.text,
-    });
+  const handleSendDirect = (supplierId: number) => {
+    sendDirectMutation.mutate(supplierId);
   };
 
-  const handleSendToSuppliers = async () => {
-    if (!suppliers || !Array.isArray(suppliers)) return;
-
-    // Get suppliers with phone numbers
-    const suppliersWithPhone = suppliers
-      .filter((supplier: any) => supplier.phone && supplier.phone.trim())
-      .map((supplier: any) => ({
-        phoneNumber: supplier.phone,
-        supplierName: supplier.name,
-      }));
-
-    if (suppliersWithPhone.length === 0) {
-      toast({
-        title: "Nenhum fornecedor encontrado",
-        description: "Nenhum fornecedor possui número de telefone cadastrado.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    sendShoppingListMutation.mutate({ suppliers: suppliersWithPhone });
+  const handleOpenWhatsApp = (phone: string, message: string) => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
   };
+
+  const suppliers = bulkData?.suppliers || [];
+  const hasSuppliers = suppliers.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center">
-            <SiWhatsapp className="text-green-600 mr-2 h-5 w-5" />
-            WhatsApp Business API
+          <DialogTitle className="flex items-center gap-2">
+            <SiWhatsapp className="h-5 w-5 text-green-600" />
+            WhatsApp - Lista de Compras
           </DialogTitle>
           <DialogDescription>
-            Gerar e enviar lista de produtos com estoque baixo via WhatsApp Business API
+            Envie listas de produtos com estoque baixo diretamente para seus fornecedores via WhatsApp.
           </DialogDescription>
         </DialogHeader>
-        
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="list">
-              <Copy className="mr-2 h-4 w-4" />
-              Lista
-            </TabsTrigger>
-            <TabsTrigger value="send" disabled>
-              <Send className="mr-2 h-4 w-4" />
-              Enviar Mensagem
-            </TabsTrigger>
-            <TabsTrigger value="suppliers" disabled>
-              <Phone className="mr-2 h-4 w-4" />
-              Enviar aos Fornecedores
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="bulk">Envio em Massa</TabsTrigger>
+            <TabsTrigger value="info">Informações</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="list" className="space-y-4">
-            <div className="overflow-y-auto max-h-96">
-              {isLoading ? (
-                <div className="bg-muted rounded-lg p-4">
-                  <p className="text-muted-foreground">Gerando lista...</p>
-                </div>
-              ) : whatsappData?.text ? (
-                <div className="bg-muted rounded-lg p-4 font-mono text-sm whitespace-pre-wrap">
-                  {whatsappData.text}
-                </div>
-              ) : (
-                <div className="bg-muted rounded-lg p-4">
-                  <p className="text-muted-foreground">Nenhum produto com estoque baixo encontrado.</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex items-center justify-between pt-4 border-t border-border">
-              <div className="flex items-center space-x-2">
-                <Info className="text-primary h-4 w-4" />
-                <span className="text-sm text-muted-foreground">
-                  Lista agrupada por fornecedor
-                </span>
+          <TabsContent value="bulk" className="space-y-4">
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-2 text-muted-foreground">Gerando listas de compras...</p>
               </div>
-              
-              <Button 
-                onClick={handleCopyToClipboard}
-                disabled={!whatsappData?.text || copied}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                <Copy className="mr-2 h-4 w-4" />
-                {copied ? "Copiado!" : "Copiar Lista"}
-              </Button>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="send" className="space-y-4">
-            <div className="space-y-4">
-              <div className="bg-yellow-50 dark:bg-yellow-950 p-4 rounded-lg">
-                <h4 className="font-medium text-yellow-900 dark:text-yellow-100 mb-2">
-                  🚧 Funcionalidade em Desenvolvimento
-                </h4>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                  A integração direta com WhatsApp Business API estará disponível em breve.
-                  Por enquanto, use a aba "Lista" para copiar e enviar manualmente.
+            ) : !hasSuppliers ? (
+              <div className="text-center py-8">
+                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Nenhum produto com estoque baixo</h3>
+                <p className="text-muted-foreground">
+                  Todos os produtos estão com estoque adequado ou não há fornecedores cadastrados.
                 </p>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">
+                    {suppliers.length} fornecedor{suppliers.length !== 1 ? 'es' : ''} com produtos em baixo estoque
+                  </h3>
+                  <Button onClick={() => refetch()} variant="outline" size="sm">
+                    Atualizar
+                  </Button>
+                </div>
+
+                <div className="grid gap-4">
+                  {suppliers.map((supplier: any) => (
+                    <Card key={supplier.supplier.id}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <CardTitle className="text-base">{supplier.supplier.name}</CardTitle>
+                            <div className="flex items-center gap-2 mt-1">
+                              {supplier.hasPhone ? (
+                                <Badge variant="outline" className="text-green-600">
+                                  <Phone className="h-3 w-3 mr-1" />
+                                  {supplier.supplier.phone}
+                                </Badge>
+                              ) : (
+                                <Badge variant="destructive">
+                                  <AlertCircle className="h-3 w-3 mr-1" />
+                                  Sem telefone
+                                </Badge>
+                              )}
+                              <Badge variant="secondary">
+                                {supplier.productCount} produto{supplier.productCount !== 1 ? 's' : ''}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleCopyToClipboard(supplier.text)}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                            {supplier.hasPhone && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleOpenWhatsApp(supplier.supplier.phone, supplier.text)}
+                                >
+                                  <SiWhatsapp className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleSendDirect(supplier.supplier.id)}
+                                  disabled={sendDirectMutation.isPending}
+                                >
+                                  <Send className="h-4 w-4 mr-1" />
+                                  Enviar
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="bg-muted/50 rounded-md p-3">
+                          <pre className="text-sm whitespace-pre-wrap font-mono">
+                            {supplier.text}
+                          </pre>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
           </TabsContent>
 
-          <TabsContent value="suppliers" className="space-y-4">
-            <div className="space-y-4">
-              <div className="bg-yellow-50 dark:bg-yellow-950 p-4 rounded-lg">
-                <h4 className="font-medium text-yellow-900 dark:text-yellow-100 mb-2">
-                  🚧 Funcionalidade em Desenvolvimento
-                </h4>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                  O envio automatizado para fornecedores via WhatsApp Business API estará disponível em breve.
-                  Por enquanto, use a aba "Lista" para copiar e enviar manualmente para cada fornecedor.
-                </p>
-              </div>
-            </div>
+          <TabsContent value="info" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Info className="h-5 w-5" />
+                  Como funciona a integração WhatsApp
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h4 className="font-medium mb-2">🚀 Modo Desenvolvimento</h4>
+                  <p className="text-sm text-muted-foreground">
+                    A integração WhatsApp Business API está em fase de desenvolvimento. 
+                    No momento, você pode copiar as mensagens e enviar manualmente ou 
+                    usar o botão do WhatsApp Web.
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-2">📱 Funcionalidades Disponíveis</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Geração automática de listas de compras por fornecedor</li>
+                    <li>• Cópia para área de transferência</li>
+                    <li>• Abertura direta no WhatsApp Web</li>
+                    <li>• Filtro por produtos com estoque baixo</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-2">🔮 Próximas Funcionalidades</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Envio automático via WhatsApp Business API</li>
+                    <li>• Confirmação de entrega</li>
+                    <li>• Templates personalizáveis</li>
+                    <li>• Histórico de mensagens enviadas</li>
+                  </ul>
+                </div>
+
+                <div className="border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950 p-3 rounded">
+                  <p className="text-sm">
+                    <strong>Dica:</strong> Para melhor experiência, cadastre os números de telefone 
+                    dos fornecedores no formato (XX) XXXXX-XXXX.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </DialogContent>

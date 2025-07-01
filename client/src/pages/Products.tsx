@@ -25,7 +25,9 @@ import {
   Trash2, 
   Search, 
   Filter,
-  AlertTriangle
+  AlertTriangle,
+  Check,
+  X
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -47,8 +49,10 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterSupplier, setFilterSupplier] = useState<string>("");
   const [filterCategory, setFilterCategory] = useState<string>("");
+  const [filterWeekDay, setFilterWeekDay] = useState<string>("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingStock, setEditingStock] = useState<{ productId: number; value: string } | null>(null);
 
   const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ["/api/products"],
@@ -137,6 +141,60 @@ export default function Products() {
     },
   });
 
+  const updateStockMutation = useMutation({
+    mutationFn: ({ productId, newStock }: { productId: number; newStock: number }) => 
+      apiRequest("PUT", `/api/products/${productId}/stock`, { newStock }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/movements"] });
+      setEditingStock(null);
+      toast({
+        title: "Estoque atualizado",
+        description: "O estoque foi atualizado e um movimento de ajuste foi criado.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar estoque",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleStartStockEdit = (productId: number, currentStock: number) => {
+    setEditingStock({ productId, value: currentStock.toString() });
+  };
+
+  const handleStockChange = (value: string) => {
+    if (editingStock) {
+      setEditingStock({ ...editingStock, value });
+    }
+  };
+
+  const handleSaveStock = () => {
+    if (!editingStock) return;
+    
+    const newStock = parseInt(editingStock.value);
+    if (isNaN(newStock) || newStock < 0) {
+      toast({
+        title: "Valor inválido",
+        description: "Digite um número válido para o estoque.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateStockMutation.mutate({ 
+      productId: editingStock.productId, 
+      newStock 
+    });
+  };
+
+  const handleCancelStockEdit = () => {
+    setEditingStock(null);
+  };
+
   const handleSubmit = (data: ProductFormData) => {
     // Convert "none" values to null for database storage
     const processedData = {
@@ -180,8 +238,9 @@ export default function Products() {
                          product.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSupplier = !filterSupplier || product.supplier?.id?.toString() === filterSupplier;
     const matchesCategory = !filterCategory || product.category?.id?.toString() === filterCategory;
+    const matchesWeekDay = !filterWeekDay || product.bestPurchaseDay === filterWeekDay;
     
-    return matchesSearch && matchesSupplier && matchesCategory;
+    return matchesSearch && matchesSupplier && matchesCategory && matchesWeekDay;
   });
 
   const isLowStock = (product: any) => product.currentStock <= product.minStock;
@@ -505,6 +564,22 @@ export default function Products() {
                   ))}
                 </SelectContent>
               </Select>
+
+              <Select value={filterWeekDay} onValueChange={setFilterWeekDay}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filtrar por dia da semana" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os dias</SelectItem>
+                  <SelectItem value="segunda">Segunda-feira</SelectItem>
+                  <SelectItem value="terca">Terça-feira</SelectItem>
+                  <SelectItem value="quarta">Quarta-feira</SelectItem>
+                  <SelectItem value="quinta">Quinta-feira</SelectItem>
+                  <SelectItem value="sexta">Sexta-feira</SelectItem>
+                  <SelectItem value="sabado">Sábado</SelectItem>
+                  <SelectItem value="domingo">Domingo</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
@@ -563,14 +638,55 @@ export default function Products() {
                         )}
                       </TableCell>
                       <TableCell className="text-center">
-                        <div>
-                          <p className="font-medium">
-                            {product.currentStock} {product.unit}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Min: {product.minStock}
-                          </p>
-                        </div>
+                        {editingStock?.productId === product.id ? (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number"
+                              value={editingStock.value}
+                              onChange={(e) => handleStockChange(e.target.value)}
+                              className="w-16 h-8 text-center text-sm"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleSaveStock();
+                                } else if (e.key === 'Escape') {
+                                  handleCancelStockEdit();
+                                }
+                              }}
+                              autoFocus
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0"
+                              onClick={handleSaveStock}
+                              disabled={updateStockMutation.isPending}
+                            >
+                              <Check className="h-3 w-3 text-green-600" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0"
+                              onClick={handleCancelStockEdit}
+                              disabled={updateStockMutation.isPending}
+                            >
+                              <X className="h-3 w-3 text-red-600" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div 
+                            className="cursor-pointer hover:bg-muted/50 rounded px-2 py-1 transition-colors"
+                            onClick={() => handleStartStockEdit(product.id, product.currentStock)}
+                            title="Clique para editar o estoque"
+                          >
+                            <p className="font-medium">
+                              {product.currentStock} {product.unit}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Min: {product.minStock}
+                            </p>
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         {isLowStock(product) ? (

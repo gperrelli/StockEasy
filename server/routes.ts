@@ -126,6 +126,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/products/:id/stock", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const { newStock } = req.body;
+      
+      if (typeof newStock !== 'number' || newStock < 0) {
+        return res.status(400).json({ message: "Invalid stock value" });
+      }
+
+      // Get current product to calculate difference
+      const product = await storage.getProduct(productId, req.user.companyId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      const currentStock = product.currentStock;
+      const difference = newStock - currentStock;
+
+      // Update product stock
+      await storage.updateProductStock(productId, newStock, req.user.companyId);
+
+      // Create adjustment movement if there's a difference
+      if (difference !== 0) {
+        const movementData = {
+          productId,
+          type: 'ajuste' as const,
+          quantity: Math.abs(difference),
+          unitPrice: null,
+          totalPrice: null,
+          notes: `Ajuste de estoque: ${currentStock} → ${newStock}`,
+          userId: req.user.id,
+          companyId: req.user.companyId
+        };
+
+        await storage.createStockMovement(movementData);
+      }
+
+      res.json({ 
+        message: "Stock updated successfully",
+        oldStock: currentStock,
+        newStock,
+        difference
+      });
+    } catch (error) {
+      console.error("Error updating stock:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Stock movements endpoints
   app.get("/api/movements", async (req, res) => {
     try {
@@ -610,6 +659,168 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // WhatsApp Business API routes
+  app.post("/api/whatsapp/send-shopping-list", async (req, res) => {
+    try {
+      const { supplierId } = req.body;
+      const companyId = req.user.companyId;
+
+      if (!supplierId) {
+        return res.status(400).json({ message: "Supplier ID is required" });
+      }
+
+      // Get supplier information
+      const supplier = await storage.getSupplier(supplierId, companyId);
+      if (!supplier || !supplier.phone) {
+        return res.status(404).json({ message: "Supplier not found or has no phone number" });
+      }
+
+      // Get low stock products for this supplier
+      const lowStockProducts = await storage.getLowStockProducts(companyId);
+      const supplierProducts = lowStockProducts.filter(product => product.supplier?.id === supplierId);
+
+      if (supplierProducts.length === 0) {
+        return res.status(200).json({ message: "No low stock products for this supplier" });
+      }
+
+      // Generate shopping list message
+      let message = `🛒 *Lista de Compras*\n\n`;
+      message += `Olá ${supplier.name}!\n\n`;
+      message += `Precisamos repor os seguintes produtos:\n\n`;
+
+      supplierProducts.forEach((product, index) => {
+        const needed = Math.max(product.maxStock || product.minStock * 2, product.minStock * 2) - product.currentStock;
+        message += `${index + 1}. *${product.name}*\n`;
+        message += `   Estoque atual: ${product.currentStock} ${product.unit}\n`;
+        message += `   Quantidade necessária: ${needed} ${product.unit}\n\n`;
+      });
+
+      message += `Por favor, confirme disponibilidade e preços.\n\n`;
+      message += `Obrigado!`;
+
+      // Send WhatsApp message if credentials are available
+      if (process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
+        await sendWhatsAppMessage(supplier.phone, message);
+        res.json({ 
+          success: true, 
+          message: "Shopping list sent successfully",
+          text: message 
+        });
+      } else {
+        // Return the message text for manual sending
+        res.json({ 
+          success: false, 
+          message: "WhatsApp credentials not configured. Message generated for manual sending.",
+          text: message,
+          phone: supplier.phone
+        });
+      }
+    } catch (error) {
+      console.error("Error sending shopping list:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/whatsapp/generate-bulk-list", async (req, res) => {
+    try {
+      const companyId = req.user.companyId;
+
+      // Get all low stock products
+      const lowStockProducts = await storage.getLowStockProducts(companyId);
+      
+      if (lowStockProducts.length === 0) {
+        return res.json({ success: true, suppliers: [] });
+      }
+
+      // Group products by supplier
+      const supplierGroups = new Map();
+      
+      for (const product of lowStockProducts) {
+        if (product.supplier) {
+          const supplierId = product.supplier.id;
+          if (!supplierGroups.has(supplierId)) {
+            supplierGroups.set(supplierId, {
+              supplier: product.supplier,
+              products: []
+            });
+          }
+          supplierGroups.get(supplierId).products.push(product);
+        }
+      }
+
+      const results = [];
+
+      // Generate messages for each supplier
+      for (const [supplierId, group] of supplierGroups) {
+        const supplier = group.supplier;
+        const products = group.products;
+
+        let message = `🛒 *Lista de Compras*\n\n`;
+        message += `Olá ${supplier.name}!\n\n`;
+        message += `Precisamos repor os seguintes produtos:\n\n`;
+
+        products.forEach((product, index) => {
+          const needed = Math.max(product.maxStock || product.minStock * 2, product.minStock * 2) - product.currentStock;
+          message += `${index + 1}. *${product.name}*\n`;
+          message += `   Estoque atual: ${product.currentStock} ${product.unit}\n`;
+          message += `   Quantidade necessária: ${needed} ${product.unit}\n\n`;
+        });
+
+        message += `Por favor, confirme disponibilidade e preços.\n\n`;
+        message += `Obrigado!`;
+
+        results.push({
+          supplier: {
+            id: supplier.id,
+            name: supplier.name,
+            phone: supplier.phone
+          },
+          text: message,
+          productCount: products.length,
+          hasPhone: !!supplier.phone
+        });
+      }
+
+      res.json({ success: true, suppliers: results });
+    } catch (error) {
+      console.error("Error generating bulk shopping list:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
+}
+
+// WhatsApp Business API helper function
+async function sendWhatsAppMessage(phone: string, message: string) {
+  if (!process.env.WHATSAPP_ACCESS_TOKEN || !process.env.WHATSAPP_PHONE_NUMBER_ID) {
+    throw new Error("WhatsApp credentials not configured");
+  }
+
+  const cleanPhone = phone.replace(/\D/g, '');
+  const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+
+  const response = await fetch(`https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      to: formattedPhone,
+      type: 'text',
+      text: {
+        body: message
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(`WhatsApp API error: ${JSON.stringify(errorData)}`);
+  }
+
+  return await response.json();
 }

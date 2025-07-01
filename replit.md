@@ -134,6 +134,13 @@ Changelog:
   * Added support for bulk sending to multiple suppliers
   * Integration placed in standby mode (development phase indicators added)
   * Fixed duplicate header/close button issue in dialogs
+- July 01, 2025. Inline Stock Editing Implementation:
+  * Added click-to-edit functionality for stock quantities in Products table
+  * Implemented PUT /api/products/:id/stock endpoint for stock updates
+  * Added automatic "Ajuste" movement creation when stock is modified inline
+  * Enhanced UI with hover effects and edit controls (check/cancel buttons)
+  * Supports keyboard shortcuts (Enter to save, Escape to cancel)
+  * Real-time validation and error handling for stock adjustments
 ```
 
 ## User Preferences
