@@ -25,7 +25,9 @@ import {
   TrendingDown,
   Search,
   Filter,
-  Package
+  Package,
+  Settings,
+  Minus
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -47,6 +49,7 @@ export default function Movements() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [selectedMovementType, setSelectedMovementType] = useState<'entrada' | 'saida' | 'ajuste'>('entrada');
 
   const { data: movements, isLoading: movementsLoading } = useQuery({
     queryKey: ["/api/movements"],
@@ -60,7 +63,7 @@ export default function Movements() {
     resolver: zodResolver(movementFormSchema),
     defaultValues: {
       productId: 0,
-      type: "entrada",
+      type: selectedMovementType,
       quantity: 1,
       unitPrice: "",
       totalPrice: "",
@@ -110,17 +113,35 @@ export default function Movements() {
   });
 
   const getMovementIcon = (type: string) => {
-    return type === 'entrada' ? (
-      <TrendingUp className="text-green-600 h-4 w-4" />
-    ) : (
-      <TrendingDown className="text-red-600 h-4 w-4" />
-    );
+    switch(type) {
+      case 'entrada':
+        return <TrendingUp className="text-green-600 h-4 w-4" />;
+      case 'saida':
+        return <TrendingDown className="text-red-600 h-4 w-4" />;
+      case 'ajuste':
+        return <Settings className="text-blue-600 h-4 w-4" />;
+      default:
+        return <ArrowUpDown className="text-gray-600 h-4 w-4" />;
+    }
   };
 
   const getMovementColor = (type: string) => {
-    return type === 'entrada' 
-      ? 'text-green-600' 
-      : 'text-red-600';
+    switch(type) {
+      case 'entrada':
+        return 'text-green-600';
+      case 'saida':
+        return 'text-red-600';
+      case 'ajuste':
+        return 'text-blue-600';
+      default:
+        return 'text-gray-600';
+    }
+  };
+
+  const openMovementDialog = (type: 'entrada' | 'saida' | 'ajuste') => {
+    setSelectedMovementType(type);
+    form.setValue('type', type);
+    setIsAddDialogOpen(true);
   };
 
   return (
@@ -133,19 +154,40 @@ export default function Movements() {
             <p className="text-muted-foreground">Registre entradas e saídas de produtos</p>
           </div>
           
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => openMovementDialog('entrada')}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <TrendingUp className="h-4 w-4 mr-2" />
+              Entrada
+            </Button>
+            <Button 
+              onClick={() => openMovementDialog('saida')}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <Minus className="h-4 w-4 mr-2" />
+              Saída
+            </Button>
+            <Button 
+              onClick={() => openMovementDialog('ajuste')}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Ajuste
+            </Button>
+          </div>
+
           <Dialog 
             open={isAddDialogOpen} 
             onOpenChange={setIsAddDialogOpen}
           >
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Movimentação
-              </Button>
-            </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>Registrar Movimentação</DialogTitle>
+                <DialogTitle>
+                  Registrar {selectedMovementType === 'entrada' ? 'Entrada' : 
+                            selectedMovementType === 'saida' ? 'Saída' : 'Ajuste'} de Estoque
+                </DialogTitle>
               </DialogHeader>
               
               <Form {...form}>

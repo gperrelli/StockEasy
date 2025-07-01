@@ -3,7 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Enums
-export const movementTypeEnum = pgEnum('movement_type', ['entrada', 'saida']);
+export const movementTypeEnum = pgEnum('movement_type', ['entrada', 'saida', 'ajuste']);
 export const weekDayEnum = pgEnum('week_day', ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo']);
 export const checklistTypeEnum = pgEnum('checklist_type', ['abertura', 'fechamento', 'limpeza']);
 
