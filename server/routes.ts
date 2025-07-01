@@ -16,11 +16,11 @@ import { z } from "zod";
 // Middleware to extract user info from session/token
 const requireAuth = (req: any, res: any, next: any) => {
   // In a real app, you'd validate JWT/session here
-  // For now, we'll mock a user
+  // For now, we'll mock a user with the correct company ID
   req.user = {
     id: 1,
-    companyId: 1,
-    email: "admin@example.com",
+    companyId: 2, // Using existing company ID from database
+    email: "admin@pizzariajoao.com",
     name: "Admin User",
     role: "admin"
   };
