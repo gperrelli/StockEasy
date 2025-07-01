@@ -337,6 +337,182 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send WhatsApp message directly via Business API
+  app.post("/api/whatsapp/send-message", async (req, res) => {
+    try {
+      const { phoneNumber, message, type = "text" } = req.body;
+
+      if (!phoneNumber || !message) {
+        return res.status(400).json({ message: "Phone number and message are required" });
+      }
+
+      // Validate WhatsApp Business API credentials
+      const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+      const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+      if (!accessToken || !phoneNumberId) {
+        return res.status(500).json({ 
+          message: "WhatsApp Business API not configured",
+          error: "Missing WHATSAPP_ACCESS_TOKEN or WHATSAPP_PHONE_NUMBER_ID"
+        });
+      }
+
+      // Format phone number (remove any non-numeric characters except +)
+      const formattedPhoneNumber = phoneNumber.replace(/[^\d+]/g, '');
+
+      const whatsappApiUrl = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+
+      const messageData = {
+        messaging_product: "whatsapp",
+        to: formattedPhoneNumber,
+        type: type,
+        text: {
+          body: message
+        }
+      };
+
+      const response = await fetch(whatsappApiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messageData)
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        console.error("WhatsApp API Error:", responseData);
+        return res.status(response.status).json({ 
+          message: "Failed to send WhatsApp message",
+          error: responseData.error || responseData
+        });
+      }
+
+      res.json({
+        success: true,
+        messageId: responseData.messages?.[0]?.id,
+        status: "sent"
+      });
+
+    } catch (error) {
+      console.error("Error sending WhatsApp message:", error);
+      res.status(500).json({ 
+        message: "Internal server error",
+        error: error.message 
+      });
+    }
+  });
+
+  // Send shopping list to multiple suppliers via WhatsApp
+  app.post("/api/whatsapp/send-shopping-list", async (req, res) => {
+    try {
+      const { suppliers } = req.body; // Array of { phoneNumber, supplierName }
+
+      if (!suppliers || !Array.isArray(suppliers) || suppliers.length === 0) {
+        return res.status(400).json({ message: "Suppliers array is required" });
+      }
+
+      // Get shopping list data
+      const lowStockProducts = await storage.getLowStockProducts(req.user.companyId);
+      
+      // Group products by supplier
+      const groupedBySupplier = lowStockProducts.reduce((acc, product) => {
+        const supplierName = product.supplier?.name || "Sem Fornecedor";
+        if (!acc[supplierName]) {
+          acc[supplierName] = [];
+        }
+        acc[supplierName].push(product);
+        return acc;
+      }, {} as Record<string, typeof lowStockProducts>);
+
+      const results = [];
+
+      for (const supplier of suppliers) {
+        const { phoneNumber, supplierName } = supplier;
+        const products = groupedBySupplier[supplierName] || [];
+
+        if (products.length === 0) {
+          results.push({
+            supplier: supplierName,
+            phoneNumber,
+            status: "skipped",
+            message: "No products with low stock for this supplier"
+          });
+          continue;
+        }
+
+        // Generate personalized message for this supplier
+        const currentDate = new Date().toLocaleDateString('pt-BR');
+        let supplierMessage = `🛒 PEDIDO DE COMPRAS\n📅 Data: ${currentDate}\n\n`;
+        supplierMessage += `Olá! Segue nossa lista de produtos necessários:\n\n`;
+        
+        products.forEach(product => {
+          const quantity = product.minStock * 3; // 3x minimum stock
+          supplierMessage += `• ${product.name}\n  Quantidade: ${quantity} ${product.unit}\n  (Estoque atual: ${product.currentStock})\n\n`;
+        });
+
+        supplierMessage += `Por favor, envie cotação e prazo de entrega.\n\nObrigado!`;
+
+        // Send message to this supplier
+        try {
+          const sendResponse = await fetch(`${req.protocol}://${req.get('host')}/api/whatsapp/send-message`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': req.headers.authorization || '',
+            },
+            body: JSON.stringify({
+              phoneNumber,
+              message: supplierMessage,
+              type: "text"
+            })
+          });
+
+          const sendResult = await sendResponse.json();
+
+          results.push({
+            supplier: supplierName,
+            phoneNumber,
+            status: sendResponse.ok ? "sent" : "failed",
+            messageId: sendResult.messageId,
+            error: sendResult.error
+          });
+
+        } catch (error) {
+          results.push({
+            supplier: supplierName,
+            phoneNumber,
+            status: "failed",
+            error: error.message
+          });
+        }
+      }
+
+      const successCount = results.filter(r => r.status === "sent").length;
+      const failureCount = results.filter(r => r.status === "failed").length;
+
+      res.json({
+        success: successCount > 0,
+        results,
+        summary: {
+          total: suppliers.length,
+          sent: successCount,
+          failed: failureCount,
+          skipped: results.filter(r => r.status === "skipped").length
+        }
+      });
+
+    } catch (error) {
+      console.error("Error sending shopping list via WhatsApp:", error);
+      res.status(500).json({ 
+        message: "Internal server error",
+        error: error.message 
+      });
+    }
+  });
+
   // Checklist endpoints
   app.get("/api/checklists/templates", async (req, res) => {
     try {

@@ -127,6 +127,13 @@ Changelog:
   * Created registration pages: Categories, Users, Products, Suppliers
   * Enhanced schema with super_admins table and company management
   * Fixed SelectItem validation errors with proper value handling
+- July 01, 2025. WhatsApp Business API Integration:
+  * Implemented backend endpoints for direct WhatsApp message sending
+  * Added shopping list generation with supplier-specific messages
+  * Created enhanced WhatsApp modal with tabbed interface
+  * Added support for bulk sending to multiple suppliers
+  * Integration placed in standby mode (development phase indicators added)
+  * Fixed duplicate header/close button issue in dialogs
 ```
 
 ## User Preferences
