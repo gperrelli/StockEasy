@@ -38,12 +38,12 @@ app.use((req, res, next) => {
 
 // Mock authentication middleware for demo
 app.use((req: any, res, next) => {
-  // Mock user for demo purposes
+  // Mock user for demo purposes (using Supabase data)
   req.user = {
-    id: 3, // João Silva
+    id: 1, // João Silva
     email: 'joao@pizzaria.com',
     name: 'João Silva',
-    company_id: 2,
+    company_id: 1,
     role: 'admin'
   };
   next();
