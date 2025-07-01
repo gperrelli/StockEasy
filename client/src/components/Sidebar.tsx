@@ -10,24 +10,72 @@ import {
   ClipboardCheck, 
   BarChart3,
   Menu,
-  X
+  X,
+  FolderOpen,
+  ChevronRight,
+  ChevronDown,
+  Settings,
+  UserPlus,
+  Building,
+  Tag,
+  List,
+  Crown,
+  Shield
 } from "lucide-react";
+import { useState } from "react";
 
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
 }
 
-const navigation = [
+const navigation: Array<{
+  name: string;
+  href?: string;
+  icon: any;
+  isExpandable?: boolean;
+  subItems?: Array<{
+    name: string;
+    href: string;
+    icon: any;
+  }>;
+}> = [
   {
     name: "Dashboard",
     href: "/",
     icon: LayoutDashboard,
   },
   {
-    name: "Produtos",
-    href: "/products",
-    icon: Package,
+    name: "Cadastros",
+    icon: FolderOpen,
+    isExpandable: true,
+    subItems: [
+      {
+        name: "Produtos",
+        href: "/cadastros/produtos",
+        icon: Package,
+      },
+      {
+        name: "Fornecedores", 
+        href: "/cadastros/fornecedores",
+        icon: Truck,
+      },
+      {
+        name: "Categorias",
+        href: "/cadastros/categorias", 
+        icon: Tag,
+      },
+      {
+        name: "Checklist",
+        href: "/cadastros/checklist",
+        icon: List,
+      },
+      {
+        name: "Usuários",
+        href: "/cadastros/usuarios",
+        icon: UserPlus,
+      },
+    ]
   },
   {
     name: "Movimentação",
@@ -35,12 +83,7 @@ const navigation = [
     icon: ArrowUpDown,
   },
   {
-    name: "Fornecedores",
-    href: "/suppliers",
-    icon: Truck,
-  },
-  {
-    name: "Checklist",
+    name: "Operações",
     href: "/checklist",
     icon: ClipboardCheck,
   },
@@ -51,8 +94,57 @@ const navigation = [
   },
 ];
 
+// Super Admin navigation for system administrators
+const superAdminNavigation: Array<{
+  name: string;
+  href?: string;
+  icon: any;
+  isExpandable?: boolean;
+  subItems?: Array<{
+    name: string;
+    href: string;
+    icon: any;
+  }>;
+}> = [
+  {
+    name: "Super Admin",
+    icon: Crown,
+    isExpandable: true,
+    subItems: [
+      {
+        name: "Empresas",
+        href: "/super-admin/empresas",
+        icon: Building,
+      },
+      {
+        name: "Configurações",
+        href: "/super-admin/settings",
+        icon: Settings,
+      },
+    ]
+  },
+];
+
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const [location] = useLocation();
+  const [cadastrosOpen, setCadastrosOpen] = useState(false);
+  const [superAdminOpen, setSuperAdminOpen] = useState(false);
+  
+  // Mock user role for demonstration - in real app this would come from auth context
+  const userRole = "admin"; // admin, gerente, operador, super_admin
+  const isSuperAdmin = userRole === "super_admin";
+  
+  // Filter navigation based on user role
+  const getFilteredNavigation = () => {
+    const baseNav = [...navigation];
+    
+    // Add Super Admin navigation for super admins only
+    if (isSuperAdmin) {
+      return [...baseNav, ...superAdminNavigation];
+    }
+    
+    return baseNav;
+  };
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
@@ -82,13 +174,78 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 mt-6">
         <ul className="space-y-2 px-4">
-          {navigation.map((item) => {
+          {getFilteredNavigation().map((item) => {
             const Icon = item.icon;
             const isActive = location === item.href;
             
+            if (item.isExpandable) {
+              const isOpen = item.name === "Cadastros" ? cadastrosOpen : 
+                            item.name === "Super Admin" ? superAdminOpen : false;
+              const toggleOpen = item.name === "Cadastros" ? 
+                                () => setCadastrosOpen(!cadastrosOpen) :
+                                () => setSuperAdminOpen(!superAdminOpen);
+              
+              return (
+                <li key={item.name}>
+                  <div>
+                    <button
+                      onClick={toggleOpen}
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+                        item.name === "Super Admin" 
+                          ? "text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                    >
+                      <div className="flex items-center">
+                        <Icon className="mr-3 h-5 w-5" />
+                        {item.name}
+                        {item.name === "Super Admin" && (
+                          <Shield className="ml-2 h-3 w-3" />
+                        )}
+                      </div>
+                      {isOpen ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </button>
+                    
+                    {isOpen && item.subItems && (
+                      <ul className="ml-4 mt-2 space-y-1 border-l-2 border-border pl-4">
+                        {item.subItems.map((subItem) => {
+                          const SubIcon = subItem.icon;
+                          const isSubActive = location === subItem.href;
+                          
+                          return (
+                            <li key={subItem.name}>
+                              <Link href={subItem.href}>
+                                <div
+                                  className={cn(
+                                    "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer",
+                                    isSubActive
+                                      ? "bg-primary/10 text-primary"
+                                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                  )}
+                                  onClick={onClose}
+                                >
+                                  <SubIcon className="mr-3 h-4 w-4" />
+                                  {subItem.name}
+                                </div>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                </li>
+              );
+            }
+            
             return (
               <li key={item.name}>
-                <Link href={item.href}>
+                <Link href={item.href!}>
                   <div
                     className={cn(
                       "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors cursor-pointer",

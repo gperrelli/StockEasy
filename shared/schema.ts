@@ -14,17 +14,33 @@ export const companies = pgTable("companies", {
   email: text("email").notNull().unique(),
   phone: text("phone"),
   address: text("address"),
+  cnpj: text("cnpj"),
+  plan: text("plan", { enum: ['basic', 'premium', 'enterprise'] }).notNull().default('basic'),
+  isActive: boolean("is_active").notNull().default(true),
+  maxUsers: integer("max_users").default(10),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Users table
+// Super Admin table - users who can manage the entire SaaS platform
+export const superAdmins = pgTable("super_admins", {
+  id: serial("id").primaryKey(),
+  supabaseUserId: text("supabase_user_id").notNull().unique(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Users table with enhanced role hierarchy
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
   companyId: integer("company_id").references(() => companies.id).notNull(),
-  role: text("role").notNull().default("user"), // admin, manager, user
+  role: text("role", { enum: ['admin', 'gerente', 'operador'] }).notNull().default("operador"),
   supabaseUserId: text("supabase_user_id").unique(),
+  isActive: boolean("is_active").notNull().default(true),
+  permissions: text("permissions").array(), // Array of specific permissions
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -127,6 +143,7 @@ export const checklistExecutionItems = pgTable("checklist_execution_items", {
 
 // Schemas for validation
 export const insertCompanySchema = createInsertSchema(companies).omit({ id: true, createdAt: true });
+export const insertSuperAdminSchema = createInsertSchema(superAdmins).omit({ id: true, createdAt: true });
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertSupplierSchema = createInsertSchema(suppliers).omit({ id: true, createdAt: true });
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true, createdAt: true });
@@ -139,6 +156,7 @@ export const insertChecklistExecutionItemSchema = createInsertSchema(checklistEx
 
 // Types
 export type Company = typeof companies.$inferSelect;
+export type SuperAdmin = typeof superAdmins.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Supplier = typeof suppliers.$inferSelect;
 export type Category = typeof categories.$inferSelect;
@@ -150,6 +168,7 @@ export type ChecklistExecution = typeof checklistExecutions.$inferSelect;
 export type ChecklistExecutionItem = typeof checklistExecutionItems.$inferSelect;
 
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
+export type InsertSuperAdmin = z.infer<typeof insertSuperAdminSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;

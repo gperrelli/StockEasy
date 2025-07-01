@@ -138,10 +138,17 @@ export default function Products() {
   });
 
   const handleSubmit = (data: ProductFormData) => {
+    // Convert "none" values to null for database storage
+    const processedData = {
+      ...data,
+      supplierId: data.supplierId && data.supplierId.toString() !== "none" ? parseInt(data.supplierId.toString()) : null,
+      categoryId: data.categoryId && data.categoryId.toString() !== "none" ? parseInt(data.categoryId.toString()) : null,
+    };
+    
     if (editingProduct) {
-      updateProductMutation.mutate({ id: editingProduct.id, data });
+      updateProductMutation.mutate({ id: editingProduct.id, data: processedData });
     } else {
-      createProductMutation.mutate(data);
+      createProductMutation.mutate(processedData);
     }
   };
 
@@ -342,7 +349,7 @@ export default function Products() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Nenhum</SelectItem>
+                              <SelectItem value="none">Nenhum</SelectItem>
                               {suppliers?.map((supplier: any) => (
                                 <SelectItem key={supplier.id} value={supplier.id.toString()}>
                                   {supplier.name}
@@ -371,7 +378,7 @@ export default function Products() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Nenhuma</SelectItem>
+                              <SelectItem value="none">Nenhuma</SelectItem>
                               {categories?.map((category: any) => (
                                 <SelectItem key={category.id} value={category.id.toString()}>
                                   {category.name}

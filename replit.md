@@ -119,6 +119,14 @@ The system implements company-based multi-tenancy where:
 ```
 Changelog:
 - July 01, 2025. Initial setup
+- July 01, 2025. Implemented complete SaaS multi-tenancy structure:
+  * Created expandable "Cadastros" menu with all registration pages
+  * Added Super Admin interface for managing companies
+  * Implemented 4-level user hierarchy (super_admin, admin, gerente, operador)
+  * Added role-based access control in sidebar navigation
+  * Created registration pages: Categories, Users, Products, Suppliers
+  * Enhanced schema with super_admins table and company management
+  * Fixed SelectItem validation errors with proper value handling
 ```
 
 ## User Preferences
