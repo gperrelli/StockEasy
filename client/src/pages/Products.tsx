@@ -425,7 +425,7 @@ export default function Products() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Nenhum</SelectItem>
+                              <SelectItem value="none">Nenhum</SelectItem>
                               <SelectItem value="segunda">Segunda-feira</SelectItem>
                               <SelectItem value="terca">Terça-feira</SelectItem>
                               <SelectItem value="quarta">Quarta-feira</SelectItem>
@@ -483,7 +483,7 @@ export default function Products() {
                   <SelectValue placeholder="Filtrar por fornecedor" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos fornecedores</SelectItem>
+                  <SelectItem value="all">Todos fornecedores</SelectItem>
                   {suppliers?.map((supplier: any) => (
                     <SelectItem key={supplier.id} value={supplier.id.toString()}>
                       {supplier.name}
@@ -497,7 +497,7 @@ export default function Products() {
                   <SelectValue placeholder="Filtrar por categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas categorias</SelectItem>
+                  <SelectItem value="all">Todas categorias</SelectItem>
                   {categories?.map((category: any) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
