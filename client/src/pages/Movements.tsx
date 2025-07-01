@@ -166,10 +166,12 @@ export default function Movements() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {products?.map((product: any) => (
-                              <SelectItem key={product.id} value={product.id.toString()}>
-                                {product.name} (Estoque: {product.currentStock} {product.unit})
-                              </SelectItem>
+                            {Array.isArray(products) && products.map((product: any) => (
+                              product.id ? (
+                                <SelectItem key={product.id} value={product.id.toString()}>
+                                  {product.name} (Estoque: {product.currentStock} {product.unit})
+                                </SelectItem>
+                              ) : null
                             ))}
                           </SelectContent>
                         </Select>
