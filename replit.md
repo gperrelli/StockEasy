@@ -141,6 +141,12 @@ Changelog:
   * Enhanced UI with hover effects and edit controls (check/cancel buttons)
   * Supports keyboard shortcuts (Enter to save, Escape to cancel)
   * Real-time validation and error handling for stock adjustments
+- July 01, 2025. UI Bug Fixes and Modal Improvements:
+  * Fixed movement modal type selection to use controlled 'value' instead of 'defaultValue'
+  * Added "Ajuste" option to movement type selection in modal
+  * Implemented conditional WhatsApp button display (only on Dashboard and Products pages)
+  * Resolved duplicate WhatsApp button issue by adding showWhatsAppButton prop to TopBar
+  * Movement modal now properly pre-selects the correct type when opened from action buttons
 ```
 
 ## User Preferences

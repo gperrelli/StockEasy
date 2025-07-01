@@ -6,10 +6,11 @@ interface TopBarProps {
   title: string;
   description: string;
   onMenuClick: () => void;
-  onWhatsAppClick: () => void;
+  onWhatsAppClick?: () => void;
+  showWhatsAppButton?: boolean;
 }
 
-export default function TopBar({ title, description, onMenuClick, onWhatsAppClick }: TopBarProps) {
+export default function TopBar({ title, description, onMenuClick, onWhatsAppClick, showWhatsAppButton = true }: TopBarProps) {
   return (
     <header className="bg-card shadow-sm border-b border-border">
       <div className="px-6 py-4 flex items-center justify-between">
@@ -39,13 +40,15 @@ export default function TopBar({ title, description, onMenuClick, onWhatsAppClic
           </Button>
           
           {/* WhatsApp Button */}
-          <Button 
-            onClick={onWhatsAppClick}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            <SiWhatsapp className="mr-2 h-4 w-4" />
-            Gerar Lista WhatsApp
-          </Button>
+          {showWhatsAppButton && onWhatsAppClick && (
+            <Button 
+              onClick={onWhatsAppClick}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <SiWhatsapp className="mr-2 h-4 w-4" />
+              Gerar Lista WhatsApp
+            </Button>
+          )}
         </div>
       </div>
     </header>

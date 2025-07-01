@@ -244,7 +244,7 @@ export default function Movements() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Tipo *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Tipo de movimentação" />
@@ -253,6 +253,7 @@ export default function Movements() {
                             <SelectContent>
                               <SelectItem value="entrada">Entrada</SelectItem>
                               <SelectItem value="saida">Saída</SelectItem>
+                              <SelectItem value="ajuste">Ajuste</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

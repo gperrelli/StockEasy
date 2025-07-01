@@ -33,6 +33,9 @@ export default function Layout({ children }: LayoutProps) {
     "/reports": "Relatórios e análises",
   }[location] || "Visão geral do estoque";
 
+  // Show WhatsApp button only on specific pages
+  const showWhatsAppButton = ["/", "/products"].includes(location);
+
   return (
     <div className="min-h-screen flex bg-background">
       <Sidebar 
@@ -45,7 +48,8 @@ export default function Layout({ children }: LayoutProps) {
           title={currentPageTitle}
           description={currentPageDescription}
           onMenuClick={() => setSidebarOpen(true)}
-          onWhatsAppClick={() => setWhatsAppModalOpen(true)}
+          onWhatsAppClick={showWhatsAppButton ? () => setWhatsAppModalOpen(true) : undefined}
+          showWhatsAppButton={showWhatsAppButton}
         />
         
         <div className="p-6">
