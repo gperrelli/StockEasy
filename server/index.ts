@@ -36,6 +36,19 @@ app.use((req, res, next) => {
   next();
 });
 
+// Mock authentication middleware for demo
+app.use((req: any, res, next) => {
+  // Mock user for demo purposes
+  req.user = {
+    id: 3, // João Silva
+    email: 'joao@pizzaria.com',
+    name: 'João Silva',
+    company_id: 2,
+    role: 'admin'
+  };
+  next();
+});
+
 (async () => {
   const server = await registerRoutes(app);
 
