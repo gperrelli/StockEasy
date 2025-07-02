@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Request, Response, NextFunction } from 'express';
 import { storage } from './storage';
+import { authService } from './authService';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

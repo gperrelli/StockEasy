@@ -59,30 +59,64 @@ export default function Login() {
       return;
     }
 
+    if (!companyName.trim()) {
+      setError('Nome da empresa é obrigatório');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: email.split('@')[0], // Use a parte antes do @ como nome temporário
-            company_id: 1 // Empresa padrão temporária
-          }
-        }
+      // Step 1: Create company if needed (simplified for demo - should be handled properly)
+      const companyResponse = await fetch('/api/companies', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: companyName,
+          cnpj: cnpj || null,
+          plan: 'basic'
+        }),
       });
 
-      if (error) {
-        setError(error.message);
-      } else {
-        setSuccessMessage('Conta criada com sucesso! Verifique seu email para confirmar a conta.');
-        setIsSignUp(false);
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
-        setCompanyName('');
-        setCnpj('');
+      let companyId = null;
+      if (companyResponse.ok) {
+        const companyData = await companyResponse.json();
+        companyId = companyData.id;
       }
-    } catch (err) {
+
+      // Step 2: Create user using AuthService (Supabase Auth + custom table)
+      const signupResponse = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          name: email.split('@')[0], // Use part before @ as temporary name
+          companyId,
+          role: 'admin' // First user becomes admin of their company
+        }),
+      });
+
+      const signupResult = await signupResponse.json();
+
+      if (!signupResponse.ok) {
+        setError(signupResult.message || 'Erro ao criar conta');
+        return;
+      }
+
+      setSuccessMessage('Conta criada com sucesso! Verifique seu email para confirmar.');
+      setIsSignUp(false);
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setCompanyName('');
+      setCnpj('');
+
+    } catch (err: any) {
+      console.error('Signup error:', err);
       setError('Erro inesperado. Tente novamente.');
     } finally {
       setLoading(false);

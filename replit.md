@@ -189,6 +189,14 @@ Changelog:
   * Enhanced login screen with three modes: login, registration, and password recovery
   * Added navigation buttons between different authentication modes with proper state management
   * Improved user interface with conditional field display based on current authentication mode
+- July 02, 2025. Complete Dual Authentication System Implementation (Supabase Auth + Custom Users Table):
+  * Created comprehensive AuthService class for managing dual user creation and synchronization
+  * Implemented /api/auth/signup endpoint for creating users in both Supabase Auth and custom users table
+  * Enhanced /api/auth/sync-user endpoint to use AuthService for proper user synchronization
+  * Added RLS (Row Level Security) migration scripts for multi-tenant data isolation
+  * Updated login registration flow to create users through AuthService with company assignment
+  * System now maintains complete separation between Supabase Auth and business logic users
+  * MASTER user (gerencia@loggme.com.br) properly handled with null companyId and system-wide permissions
 ```
 
 ## User Preferences

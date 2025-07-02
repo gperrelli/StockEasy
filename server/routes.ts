@@ -19,6 +19,7 @@ import {
 } from "@shared/schema";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
+import { authService } from "./authService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth endpoints - don't require auth middleware
@@ -30,68 +31,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid user data' });
       }
 
-      // Check if user already exists in our database
-      let dbUser = await storage.getUserBySupabaseId(user.id);
-      console.log('Existing user found:', !!dbUser);
+      console.log('Syncing user:', user.email);
       
-      if (!dbUser) {
-        // Verificar se já existe usuário com este email (pode ter sido criado localmente)
-        const existingByEmail = await storage.getUserByEmail(user.email);
-        if (existingByEmail) {
-          console.log('User exists by email, updating supabaseUserId...');
-          // Atualizar o usuário existente com o supabaseUserId
-          dbUser = await storage.updateUser(existingByEmail.id, {
-            supabaseUserId: user.id
-          }, existingByEmail.companyId || null);
-          console.log('Updated existing user with Supabase ID');
-        } else {
-          console.log('Creating new user...');
-          
-          // Verificar se é o usuário MASTER
-          if (user.email === 'gerencia@loggme.com.br') {
-            console.log('Creating MASTER user...');
-            dbUser = await storage.createUser({
-              supabaseUserId: user.id,
-              name: user.user_metadata?.name || 'Admin Master',
-              email: user.email,
-              role: 'MASTER',
-              companyId: null, // MASTER não pertence a empresa específica
-              isActive: true
-            });
-            console.log('MASTER user created successfully');
-          } else {
-            // Para outros usuários, assign to company ID 2 (demo)
-            console.log('Looking for company...');
-            let defaultCompany = await storage.getCompany(2);
-            console.log('Company 2 found:', !!defaultCompany);
-            
-            if (!defaultCompany) {
-              defaultCompany = await storage.getCompany(4);
-              console.log('Company 4 found:', !!defaultCompany);
-            }
-            
-            if (!defaultCompany) {
-              throw new Error('No valid company found for user assignment');
-            }
-
-            console.log('Creating user with company ID:', defaultCompany.id);
-            dbUser = await storage.createUser({
-              supabaseUserId: user.id,
-              name: user.user_metadata?.name || user.email.split('@')[0],
-              email: user.email,
-              role: 'operador',
-              companyId: defaultCompany.id,
-              isActive: true
-            });
-            console.log('User created successfully');
-          }
-        }
-      }
-
+      // Use AuthService to sync user from Supabase Auth
+      const dbUser = await authService.syncUserFromAuth(user.id);
+      
       res.json({ user: dbUser });
     } catch (error) {
       console.error('Error syncing user:', error);
       res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // New user signup route - creates user in both Supabase Auth and custom table
+  app.post('/api/auth/signup', async (req, res) => {
+    try {
+      const { email, password, name, companyId, role = 'operador' } = req.body;
+      
+      if (!email || !password || !name) {
+        return res.status(400).json({ error: 'Email, password, and name are required' });
+      }
+
+      console.log('Creating new user:', email);
+      
+      // Use AuthService to create complete user
+      const result = await authService.createUserComplete({
+        email,
+        password,
+        name,
+        companyId,
+        role
+      });
+      
+      res.json({ 
+        message: 'User created successfully',
+        user: result.customUser,
+        supabaseUser: result.supabaseUser
+      });
+      
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      res.status(500).json({ 
+        error: 'Failed to create user',
+        message: error.message 
+      });
     }
   });
 
