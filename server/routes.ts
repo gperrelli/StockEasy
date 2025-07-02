@@ -959,12 +959,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // MASTER user endpoints
   // Companies management for MASTER users
-  app.get("/api/master/companies", requireAuth, async (req: any, res) => {
+  app.get("/api/master/companies", authMiddleware, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const user = await storage.getUserBySupabaseId(userId);
-      
-      if (!user || user.role !== 'MASTER') {
+      // Check if user has MASTER role directly from auth middleware
+      if (req.user.role !== 'MASTER') {
         return res.status(403).json({ error: 'Access denied. MASTER role required.' });
       }
       
@@ -977,12 +975,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // All users management for MASTER users  
-  app.get("/api/master/users", requireAuth, async (req: any, res) => {
+  app.get("/api/master/users", authMiddleware, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const user = await storage.getUserBySupabaseId(userId);
-      
-      if (!user || user.role !== 'MASTER') {
+      // Check if user has MASTER role directly from auth middleware
+      if (req.user.role !== 'MASTER') {
         return res.status(403).json({ error: 'Access denied. MASTER role required.' });
       }
       
@@ -1009,12 +1005,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Assign company to Admin user (MASTER only)
-  app.post("/api/master/users/:userId/assign-company", requireAuth, async (req: any, res) => {
+  app.post("/api/master/users/:userId/assign-company", authMiddleware, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const user = await storage.getUserBySupabaseId(userId);
-      
-      if (!user || user.role !== 'MASTER') {
+      // Check if user has MASTER role directly from auth middleware
+      if (req.user.role !== 'MASTER') {
         return res.status(403).json({ error: 'Access denied. MASTER role required.' });
       }
       
