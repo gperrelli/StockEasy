@@ -8,7 +8,8 @@ import {
   Search,
   Plus,
   UserCheck,
-  UserX
+  UserX,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, clearAllCache, forceRefresh } from "@/lib/queryClient";
 
 interface MasterUser {
   id: number;
@@ -158,6 +159,23 @@ export default function MasterDashboard() {
           <p className="text-muted-foreground">
             Gerencie empresas e usuários do sistema
           </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              clearAllCache();
+              forceRefresh(['/api/master/companies', '/api/master/users']);
+              toast({
+                title: "Cache limpo",
+                description: "Dados atualizados do Supabase",
+              });
+            }}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Atualizar Dados
+          </Button>
         </div>
       </div>
 

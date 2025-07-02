@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
+import { setupRealtimeUpdates } from "./lib/supabase";
 
 // Components
 import Layout from "@/components/Layout";
@@ -30,6 +32,19 @@ import MasterDashboard from "@/pages/master/Dashboard";
 import Operations from "@/pages/Operations";
 
 function AuthenticatedApp() {
+  // Setup real-time updates quando o usuário está autenticado
+  useEffect(() => {
+    const invalidateQuery = (queryKey: string) => {
+      queryClient.invalidateQueries({ queryKey: [queryKey] });
+    };
+
+    const cleanup = setupRealtimeUpdates(invalidateQuery);
+    
+    console.log('Real-time subscriptions ativadas');
+    
+    return cleanup; // Cleanup quando componente desmonta
+  }, []);
+
   return (
     <Layout>
       <Switch>

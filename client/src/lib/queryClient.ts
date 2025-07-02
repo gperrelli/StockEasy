@@ -67,8 +67,9 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      refetchOnWindowFocus: true, // Refetch quando voltar à aba
+      staleTime: 30 * 1000, // 30 segundos - dados ficam "frescos" por pouco tempo
+      gcTime: 60 * 1000, // 1 minuto - remove do cache rapidamente (gcTime é o novo nome)  
       retry: false,
     },
     mutations: {
@@ -76,3 +77,17 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Função para limpar todo o cache e forçar atualização
+export const clearAllCache = () => {
+  queryClient.invalidateQueries();
+  queryClient.clear();
+};
+
+// Função para forçar atualização de queries específicas
+export const forceRefresh = (queryKeys: string[]) => {
+  queryKeys.forEach(key => {
+    queryClient.invalidateQueries({ queryKey: [key] });
+    queryClient.refetchQueries({ queryKey: [key] });
+  });
+};
