@@ -961,8 +961,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Companies management for MASTER users
   app.get("/api/master/companies", async (req: any, res) => {
     try {
-      const companiesList = await db.select().from(companies).orderBy(asc(companies.name));
-      res.json(companiesList);
+      // Use Supabase client directly while Drizzle connection is being fixed
+      const { supabase } = await import('./db');
+      const { data: companiesList, error } = await supabase
+        .from('companies')
+        .select('*')
+        .order('name', { ascending: true });
+      
+      if (error) {
+        console.error("Supabase error:", error);
+        res.status(500).json({ message: "Database error" });
+        return;
+      }
+      
+      console.log(`✓ Found ${companiesList?.length || 0} companies in Supabase`);
+      res.json(companiesList || []);
     } catch (error) {
       console.error("Error fetching companies:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -972,23 +985,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // All users management for MASTER users  
   app.get("/api/master/users", async (req: any, res) => {
     try {
+      // Use Supabase client directly while Drizzle connection is being fixed
+      const { supabase } = await import('./db');
+      const { data: allUsers, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('name', { ascending: true });
       
-      // Get all users across all companies
-      const allUsers = await db.select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        companyId: users.companyId,
-        isActive: users.isActive,
-        createdAt: users.createdAt,
-        companyName: companies.name
-      })
-      .from(users)
-      .leftJoin(companies, eq(users.companyId, companies.id))
-      .orderBy(asc(users.name));
+      if (error) {
+        console.error("Supabase error:", error);
+        res.status(500).json({ message: "Database error" });
+        return;
+      }
       
-      res.json(allUsers);
+      // Transform data to match expected format, converting snake_case to camelCase
+      const transformedUsers = allUsers?.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        companyId: user.company_id,
+        isActive: true, // Default since not in current schema
+        createdAt: user.created_at,
+        companyName: null // We'll fetch company names separately if needed
+      })) || [];
+      
+      console.log(`✓ Found ${transformedUsers.length} users in Supabase`);
+      res.json(transformedUsers);
     } catch (error) {
       console.error("Error fetching all users:", error);
       res.status(500).json({ message: "Internal server error" });
