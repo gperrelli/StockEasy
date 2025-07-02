@@ -246,6 +246,7 @@ Changelog:
   * ESTADO ATUAL: Pizzaria Exemplo criada com usuário admin, categorias e fornecedor
   * RLS: Row Level Security funcionando adequadamente com dados isolados por empresa
   * ARQUITETURA: Agora segue melhores práticas Supabase sem APIs intermediárias desnecessárias
+  * PENDENTE: Campo CNPJ e RLS precisam ser habilitados manualmente no Supabase Dashboard (instruções criadas)
 ```
 
 ## User Preferences
