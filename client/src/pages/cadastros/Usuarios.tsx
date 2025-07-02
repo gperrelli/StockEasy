@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -303,6 +304,9 @@ export default function CadastroUsuarios() {
                 <DialogTitle>
                   {editingUser ? "Editar Usuário" : "Novo Usuário"}
                 </DialogTitle>
+                <DialogDescription>
+                  {editingUser ? "Altere as informações do usuário abaixo." : "Preencha os dados para criar um novo usuário."}
+                </DialogDescription>
               </DialogHeader>
               
               <Form {...form}>
