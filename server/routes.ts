@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { requireAuth, mockAuth } from "./supabaseAuth";
 import { 
   insertProductSchema,
   insertStockMovementSchema,
@@ -14,23 +15,11 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 
-// Middleware to extract user info from session/token
-const requireAuth = (req: any, res: any, next: any) => {
-  // In a real app, you'd validate JWT/session here
-  // For now, we'll mock a user with the correct company ID
-  req.user = {
-    id: 1,
-    companyId: 2, // Using existing company ID from database
-    email: "admin@pizzariajoao.com",
-    name: "Admin User",
-    role: "admin"
-  };
-  next();
-};
-
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply auth middleware to all API routes
-  app.use("/api", requireAuth);
+  // Use mock auth for development or when service key is not available
+  const authMiddleware = process.env.SUPABASE_SERVICE_ROLE_KEY ? requireAuth : mockAuth;
+  app.use("/api", authMiddleware);
 
   // Dashboard stats
   app.get("/api/dashboard/stats", async (req, res) => {

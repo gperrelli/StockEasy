@@ -147,10 +147,20 @@ Changelog:
   * Implemented conditional WhatsApp button display (only on Dashboard and Products pages)
   * Resolved duplicate WhatsApp button issue by adding showWhatsAppButton prop to TopBar
   * Movement modal now properly pre-selects the correct type when opened from action buttons
+- July 02, 2025. Supabase Authentication Migration (Phase 1):
+  * Implemented Supabase Auth system with useAuth hook for client-side authentication
+  * Created JWT token middleware for API requests authentication
+  * Added comprehensive login page with proper error handling
+  * Updated API middleware to support both Supabase Auth and mock authentication (fallback)
+  * Fixed database connection errors and PostgreSQL query formatting issues
+  * System now runs with mock authentication when Supabase service key not available
+  * Authentication foundation ready for complete Supabase migration with RLS
 ```
 
 ## User Preferences
 
 ```
 Preferred communication style: Simple, everyday language.
+Database preference: Supabase (complete migration from Neon) for integrated RLS, authentication, and long-term maintainability.
+Priority: Multi-tenant SaaS authentication with proper company isolation through Supabase Auth + RLS.
 ```

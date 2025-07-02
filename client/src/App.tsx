@@ -3,6 +3,8 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/useAuth";
+import { Loader2 } from "lucide-react";
 
 // Components
 import Layout from "@/components/Layout";
@@ -26,7 +28,7 @@ import CadastroFornecedores from "@/pages/cadastros/Fornecedores";
 import SuperAdminEmpresas from "@/pages/super-admin/Empresas";
 import Operations from "@/pages/Operations";
 
-function Router() {
+function AuthenticatedApp() {
   return (
     <Layout>
       <Switch>
@@ -36,7 +38,6 @@ function Router() {
         <Route path="/suppliers" component={Suppliers} />
         <Route path="/checklist" component={Checklist} />
         <Route path="/operations" component={Operations} />
-        <Route path="/login" component={Login} />
         
         {/* Cadastros Routes */}
         <Route path="/cadastros/categorias" component={CadastroCategorias} />
@@ -56,12 +57,30 @@ function Router() {
   );
 }
 
+function AppContent() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
+  return <AuthenticatedApp />;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        <AppContent />
       </TooltipProvider>
     </QueryClientProvider>
   );

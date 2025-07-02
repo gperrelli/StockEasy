@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { eq, and, desc, asc, sql, count } from "drizzle-orm";
 import {
   companies,
@@ -36,7 +36,7 @@ import {
   type InsertChecklistExecutionItem,
 } from "@shared/schema";
 
-const connection = neon(process.env.DATABASE_URL!);
+const connection = postgres(process.env.DATABASE_URL!);
 const db = drizzle(connection);
 
 export interface IStorage {
@@ -147,7 +147,7 @@ export class DatabaseStorage implements IStorage {
   async deleteUser(id: number, companyId: number): Promise<boolean> {
     const result = await db.delete(users)
       .where(and(eq(users.id, id), eq(users.companyId, companyId)));
-    return result.rowCount > 0;
+    return result.length > 0;
   }
 
   async getUsersByCompany(companyId: number): Promise<User[]> {
@@ -182,7 +182,7 @@ export class DatabaseStorage implements IStorage {
   async deleteSupplier(id: number, companyId: number): Promise<boolean> {
     const result = await db.delete(suppliers)
       .where(and(eq(suppliers.id, id), eq(suppliers.companyId, companyId)));
-    return result.rowCount > 0;
+    return result.length > 0;
   }
 
   // Category methods
@@ -213,7 +213,7 @@ export class DatabaseStorage implements IStorage {
   async deleteCategory(id: number, companyId: number): Promise<boolean> {
     const result = await db.delete(categories)
       .where(and(eq(categories.id, id), eq(categories.companyId, companyId)));
-    return result.rowCount > 0;
+    return result.length > 0;
   }
 
   // Product methods
@@ -303,7 +303,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db.update(products)
       .set({ isActive: false })
       .where(and(eq(products.id, id), eq(products.companyId, companyId)));
-    return result.rowCount > 0;
+    return result.length > 0;
   }
 
   async getLowStockProducts(companyId: number): Promise<ProductWithDetails[]> {
@@ -520,6 +520,7 @@ export class DatabaseStorage implements IStorage {
   }> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const todayISO = today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
 
     const [totalProducts, lowStockCount, todayMovements, suppliersCount] = await Promise.all([
       db.select({ count: count() }).from(products)
@@ -531,7 +532,7 @@ export class DatabaseStorage implements IStorage {
           sql`${products.currentStock} <= ${products.minStock}`
         )),
       db.select({ count: count() }).from(stockMovements)
-        .where(and(eq(stockMovements.companyId, companyId), sql`${stockMovements.createdAt} >= ${today}`)),
+        .where(and(eq(stockMovements.companyId, companyId), sql`DATE(${stockMovements.createdAt}) = ${todayISO}`)),
       db.select({ count: count() }).from(suppliers)
         .where(eq(suppliers.companyId, companyId)),
     ]);
