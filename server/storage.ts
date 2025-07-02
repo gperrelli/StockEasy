@@ -165,7 +165,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(users.name);
+    console.log("📊 getAllUsers() called");
+    const result = await db.select().from(users).orderBy(users.name);
+    console.log("📊 getAllUsers() result:", result.length, "users");
+    return result;
   }
 
   // Supplier methods

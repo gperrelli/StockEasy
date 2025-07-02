@@ -95,8 +95,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Apply auth middleware to all other API routes
-  // Use real Supabase auth when available, fallback to mock for development
-  const authMiddleware = process.env.SUPABASE_SERVICE_ROLE_KEY ? requireAuth : mockAuth;
+  // Force mock auth for development until RLS is properly configured
+  const authMiddleware = mockAuth; // process.env.SUPABASE_SERVICE_ROLE_KEY ? requireAuth : mockAuth;
 
   // Dashboard stats
   app.get("/api/dashboard/stats", authMiddleware, async (req, res) => {
@@ -637,9 +637,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Users endpoints
-  app.get("/api/users", async (req, res) => {
+  app.get("/api/users", authMiddleware, async (req, res) => {
     try {
-      const users = await storage.getUsersByCompany(req.user.companyId);
+      console.log("API /users called. User:", req.user);
+      if (!req.user) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
+      // MASTER users can see all users, others only see their company users
+      console.log("User role:", req.user.role, "Type:", typeof req.user.role);
+      const isMaster = req.user.role === 'MASTER';
+      console.log("Is MASTER?", isMaster);
+      
+      const users = isMaster
+        ? await storage.getAllUsers()
+        : await storage.getUsersByCompany(req.user.companyId);
+        
+      console.log("Found users:", users.length);
       res.json(users);
     } catch (error) {
       console.error("Error fetching users:", error);

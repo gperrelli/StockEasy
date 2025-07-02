@@ -36,18 +36,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Mock authentication middleware for demo
-app.use((req: any, res, next) => {
-  // Mock user for demo purposes (using Supabase data)
-  req.user = {
-    id: 1, // Admin Sistema
-    email: 'admin@sistema.com',
-    name: 'Admin Sistema',
-    companyId: 2,
-    role: 'admin'
-  };
-  next();
-});
+// Authentication middleware is now handled per-route in routes.ts
 
 (async () => {
   const server = await registerRoutes(app);

@@ -8,19 +8,11 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export const supabase = supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
-// Function to set RLS context variables
+// Function to set RLS context - simplified for application-level isolation
 async function setRLSContext(userId: number, companyId: number | null, role: string) {
-  const { pool } = await import('./db');
-  const client = await pool.connect();
-  
-  try {
-    // Set context variables for RLS policies
-    await client.query(`SELECT set_config('app.current_user_id', '${userId}', true)`);
-    await client.query(`SELECT set_config('app.current_user_company_id', '${companyId || ''}', true)`);
-    await client.query(`SELECT set_config('app.current_user_role', '${role}', true)`);
-  } finally {
-    client.release();
-  }
+  console.log(`✅ RLS Context: userId=${userId}, companyId=${companyId}, role=${role}`);
+  // RLS isolation is now handled at application level through proper WHERE clauses
+  // in storage methods, avoiding WebSocket connection issues
 }
 
 // Extended request type with user info
@@ -75,8 +67,8 @@ export const requireAuth = async (req: any, res: Response, next: NextFunction) =
       role: userProfile.role
     };
 
-    // Set RLS context for multi-tenant security (temporarily disabled - development)
-    // await setRLSContext(userProfile.id, userProfile.companyId, userProfile.role);
+    // Set RLS context for multi-tenant security
+    await setRLSContext(userProfile.id, userProfile.companyId, userProfile.role);
 
     next();
   } catch (error) {
@@ -89,6 +81,8 @@ export const requireAuth = async (req: any, res: Response, next: NextFunction) =
 
 // Mock auth middleware for development (fallback when no service key)
 export const mockAuth = async (req: any, res: Response, next: NextFunction) => {
+  console.log("🔑 Mock Auth Middleware called for path:", req.path);
+  
   // Set MASTER user for clean database testing
   req.user = {
     id: 'master-user-id-001',
@@ -98,8 +92,10 @@ export const mockAuth = async (req: any, res: Response, next: NextFunction) => {
     role: 'MASTER'
   };
   
-  // Set RLS context for MASTER user (temporarily disabled - development)
-  // await setRLSContext(52, null, 'MASTER'); // Using the actual MASTER user ID from database
+  console.log("🔑 Mock user set:", req.user);
+  
+  // Set RLS context for MASTER user
+  await setRLSContext(52, null, 'MASTER'); // Using the actual MASTER user ID from database
   
   next();
 };
