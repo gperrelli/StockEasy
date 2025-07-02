@@ -43,6 +43,7 @@ export interface IStorage {
   // Company methods
   getCompany(id: number): Promise<Company | undefined>;
   createCompany(company: InsertCompany): Promise<Company>;
+  getAllCompanies(): Promise<Company[]>;
 
   // User methods
   getUser(id: number): Promise<User | undefined>;
@@ -52,6 +53,7 @@ export interface IStorage {
   updateUser(id: number, user: Partial<InsertUser>, companyId: number): Promise<User | undefined>;
   deleteUser(id: number, companyId: number): Promise<boolean>;
   getUsersByCompany(companyId: number): Promise<User[]>;
+  getAllUsers(): Promise<User[]>;
 
   // Supplier methods
   getSuppliersByCompany(companyId: number): Promise<Supplier[]>;
@@ -115,6 +117,10 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async getAllCompanies(): Promise<Company[]> {
+    return await db.select().from(companies).orderBy(companies.name);
+  }
+
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
@@ -156,6 +162,10 @@ export class DatabaseStorage implements IStorage {
 
   async getUsersByCompany(companyId: number): Promise<User[]> {
     return await db.select().from(users).where(eq(users.companyId, companyId));
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(users.name);
   }
 
   // Supplier methods
