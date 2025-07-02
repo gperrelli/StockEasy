@@ -74,7 +74,7 @@ export default function Login() {
         },
         body: JSON.stringify({
           name: companyName,
-          cnpj: cnpj || null,
+          CNPJ: cnpj || null,
           plan: 'basic'
         }),
       });
@@ -83,6 +83,12 @@ export default function Login() {
       if (companyResponse.ok) {
         const companyData = await companyResponse.json();
         companyId = companyData.id;
+        console.log('Company created successfully:', companyData);
+      } else {
+        const errorData = await companyResponse.text();
+        console.error('Company creation failed:', errorData);
+        setError('Erro ao criar empresa. Tente novamente.');
+        return;
       }
 
       // Step 2: Create user using AuthService (Supabase Auth + custom table)
@@ -103,7 +109,8 @@ export default function Login() {
       const signupResult = await signupResponse.json();
 
       if (!signupResponse.ok) {
-        setError(signupResult.message || 'Erro ao criar conta');
+        console.error('Signup failed:', signupResult);
+        setError(signupResult.error || signupResult.message || 'Erro ao criar conta');
         return;
       }
 
