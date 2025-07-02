@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Layout from "@/components/Layout";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -152,8 +152,7 @@ export default function Movements() {
   };
 
   return (
-    <Layout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Action Buttons */}
         <div className="flex justify-end gap-2">
           <Button 
@@ -465,7 +464,6 @@ export default function Movements() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </Layout>
+    </div>
   );
 }

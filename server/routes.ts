@@ -200,11 +200,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/movements", async (req, res) => {
     try {
-      const movementData = insertStockMovementSchema.parse({
+      // Clean up empty string values for numeric fields
+      const cleanedBody = {
         ...req.body,
+        unitPrice: req.body.unitPrice === "" ? null : req.body.unitPrice,
+        totalPrice: req.body.totalPrice === "" ? null : req.body.totalPrice,
         userId: req.user.id,
         companyId: req.user.companyId
-      });
+      };
+
+      const movementData = insertStockMovementSchema.parse(cleanedBody);
 
       // Create the movement
       const movement = await storage.createStockMovement(movementData);
