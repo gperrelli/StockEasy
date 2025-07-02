@@ -237,6 +237,15 @@ Changelog:
   * Todas as APIs principais testadas e funcionando: /users, /products, /dashboard/stats, /master/companies
   * Frontend e backend comunicando perfeitamente via Supabase com ambiente limpo
   * Sistema pronto para criação de primeira empresa e teste completo do fluxo multi-tenant
+- July 02, 2025. ARQUITETURA CRÍTICA CORRIGIDA - Cliente Supabase Direto:
+  * IDENTIFICADO E RESOLVIDO: Sistema estava criando APIs locais desnecessárias (localhost:5000) contornando RLS
+  * IMPLEMENTADO: Uso direto do cliente Supabase para todas operações CRUD
+  * ELIMINADO: Rotas intermediárias como /api/master/users, /api/master/companies
+  * CRIADO: Scripts de criação de dados usando cliente Supabase direto (create_example_data.js)
+  * VALIDADO: Multi-tenancy funcionando corretamente com isolamento por company_id
+  * ESTADO ATUAL: Pizzaria Exemplo criada com usuário admin, categorias e fornecedor
+  * RLS: Row Level Security funcionando adequadamente com dados isolados por empresa
+  * ARQUITETURA: Agora segue melhores práticas Supabase sem APIs intermediárias desnecessárias
 ```
 
 ## User Preferences

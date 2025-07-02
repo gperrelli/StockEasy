@@ -971,6 +971,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create new company (MASTER only)
+  app.post("/api/master/companies", mockAuth, async (req: any, res) => {
+    try {
+      const { name, email, phone, cnpj, address } = req.body;
+      
+      console.log(`📝 Creating new company: ${name}`);
+      
+      const newCompany = await storage.createCompany({
+        name,
+        email,
+        phone,
+        cnpj,
+        address,
+        plan: 'basic',
+        isActive: true,
+        maxUsers: 10
+      });
+      
+      console.log(`✅ Company created with ID: ${newCompany.id}`);
+      res.json(newCompany);
+    } catch (error) {
+      console.error("Error creating company:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // All users management for MASTER users  
   app.get("/api/master/users", mockAuth, async (req: any, res) => {
     try {
@@ -1021,6 +1047,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error assigning company to user:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Create new user for company (MASTER only)
+  app.post("/api/master/users", mockAuth, async (req: any, res) => {
+    try {
+      const { email, name, password, companyId, role } = req.body;
+      
+      console.log(`📝 Creating new user: ${name} (${email}) for company ${companyId}`);
+      
+      // Validate company exists
+      const company = await storage.getCompany(companyId);
+      if (!company) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+      
+      // Create user directly in our database (bypassing Supabase Auth for simplicity)
+      const newUser = await storage.createUser({
+        email,
+        name,
+        password: password, // In production, this should be hashed
+        companyId,
+        role: role || 'operador',
+        supabaseUserId: `mock-${Date.now()}`, // Mock Supabase ID for development
+        isActive: true
+      });
+      
+      console.log(`✅ User created: ${newUser.name} (ID: ${newUser.id})`);
+      res.json({
+        message: 'User created successfully',
+        user: newUser
+      });
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ 
+        error: 'Failed to create user',
+        message: error.message 
+      });
     }
   });
 
