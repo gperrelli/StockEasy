@@ -1,60 +1,102 @@
-// Script para verificar estado real do Supabase
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.log('❌ Missing Supabase credentials');
-  process.exit(1);
-}
-
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function verifyState() {
-  console.log('🔍 Verificando estado do Supabase...');
-  
   try {
-    // Verificar empresas
+    console.log('🔍 Verificando estado atual do banco Supabase...\n');
+    
+    // 1. Verificar estrutura da tabela companies
+    console.log('📋 Estrutura da tabela companies:');
     const { data: companies, error: companiesError } = await supabase
       .from('companies')
-      .select('*');
+      .select('*')
+      .limit(1);
     
     if (companiesError) {
-      console.log('❌ Erro ao buscar companies:', companiesError);
+      console.log('❌ Erro ao acessar companies:', companiesError.message);
     } else {
-      console.log('🏢 Companies found:', companies.length);
-      companies.forEach(company => {
-        console.log(`   - ${company.name} (ID: ${company.id}, CNPJ: ${company.cnpj})`);
-      });
+      if (companies.length > 0) {
+        const columns = Object.keys(companies[0]);
+        console.log('✅ Colunas disponíveis:', columns);
+        
+        if (columns.includes('cnpj')) {
+          console.log('✅ Campo CNPJ: EXISTE');
+        } else {
+          console.log('❌ Campo CNPJ: NÃO EXISTE');
+        }
+      } else {
+        console.log('⚠️  Tabela companies vazia');
+      }
     }
 
-    // Verificar usuários
-    const { data: users, error: usersError } = await supabase
+    // 2. Tentar verificar RLS indiretamente
+    console.log('\n🔒 Verificando acesso às tabelas (indicativo de RLS):');
+    
+    const tables = ['companies', 'users', 'suppliers', 'categories', 'products'];
+    
+    for (const table of tables) {
+      const { data, error } = await supabase
+        .from(table)
+        .select('*')
+        .limit(1);
+      
+      if (error) {
+        if (error.message.includes('RLS')) {
+          console.log(`🔒 ${table}: RLS provavelmente HABILITADO (${error.message})`);
+        } else {
+          console.log(`❌ ${table}: ERRO - ${error.message}`);
+        }
+      } else {
+        console.log(`✅ ${table}: ACESSÍVEL (${data.length} registros)`);
+      }
+    }
+
+    // 3. Verificar dados existentes
+    console.log('\n📊 Resumo dos dados:');
+    
+    const { data: allCompanies } = await supabase
+      .from('companies')
+      .select('id, name, email');
+    
+    const { data: allUsers } = await supabase
       .from('users')
-      .select('id, email, name, company_id, role');
+      .select('id, name, email, role');
     
-    if (usersError) {
-      console.log('❌ Erro ao buscar users:', usersError);
-    } else {
-      console.log('👥 Users found:', users.length);
-      users.forEach(user => {
-        console.log(`   - ${user.name} (${user.email}) - Role: ${user.role}, Company: ${user.company_id}`);
+    console.log(`💼 Empresas: ${allCompanies?.length || 0}`);
+    console.log(`👥 Usuários: ${allUsers?.length || 0}`);
+    
+    if (allCompanies?.length > 0) {
+      console.log('🏢 Empresas registradas:');
+      allCompanies.forEach(company => {
+        console.log(`  • ${company.name} (ID: ${company.id})`);
       });
     }
 
-    // Verificar status RLS
-    const { data: rlsStatus, error: rlsError } = await supabase
-      .rpc('check_rls_status');
+    console.log('\n🎯 PRÓXIMOS PASSOS NECESSÁRIOS:');
     
-    if (rlsError) {
-      console.log('⚠️ Could not check RLS status:', rlsError.message);
+    const { data: testCnpj, error: cnpjError } = await supabase
+      .from('companies')
+      .select('cnpj')
+      .limit(1);
+    
+    if (cnpjError && cnpjError.message.includes('does not exist')) {
+      console.log('1. ❌ Adicionar campo CNPJ na tabela companies');
+      console.log('   - Acesse Supabase Dashboard > Table Editor > companies');
+      console.log('   - Add Column: nome="cnpj", tipo="text", nullable=true');
     } else {
-      console.log('🔒 RLS Status:', rlsStatus);
+      console.log('1. ✅ Campo CNPJ já existe');
     }
+    
+    console.log('2. 🔒 Habilitar RLS em todas as tabelas');
+    console.log('   - Acesse Supabase Dashboard > Authentication > RLS');
+    console.log('   - Habilite RLS para todas as tabelas do sistema');
 
   } catch (error) {
-    console.log('❌ Error:', error.message);
+    console.error('💥 Erro inesperado:', error.message);
   }
 }
 
