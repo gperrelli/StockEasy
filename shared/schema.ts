@@ -35,7 +35,7 @@ export const superAdmins = pgTable("super_admins", {
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"), // Optional for Supabase users
   name: text("name").notNull(),
   companyId: integer("company_id").references(() => companies.id).notNull(),
   role: text("role", { enum: ['admin', 'gerente', 'operador'] }).notNull().default("operador"),

@@ -16,7 +16,66 @@ import {
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Apply auth middleware to all API routes
+  // Auth endpoints - don't require auth middleware
+  app.post('/api/auth/sync-user', async (req, res) => {
+    try {
+      const { user } = req.body;
+      
+      if (!user || !user.id || !user.email) {
+        return res.status(400).json({ error: 'Invalid user data' });
+      }
+
+      // Check if user already exists in our database
+      let dbUser = await storage.getUserBySupabaseId(user.id);
+      
+      if (!dbUser) {
+        // Create new user in our database
+        // For now, assign to a default company (company ID 1)
+        // In production, this would be determined by business logic
+        let defaultCompany = await storage.getCompany(1);
+        if (!defaultCompany) {
+          // Create a default company if it doesn't exist
+          defaultCompany = await storage.createCompany({
+            name: 'Empresa Padrão',
+            email: 'admin@empresa.com',
+            phone: '(11) 99999-9999'
+          });
+        }
+
+        dbUser = await storage.createUser({
+          supabaseUserId: user.id,
+          name: user.user_metadata?.name || user.email.split('@')[0],
+          email: user.email,
+          role: 'operador', // Default role
+          companyId: defaultCompany.id,
+          isActive: true
+        });
+      }
+
+      res.json({ user: dbUser });
+    } catch (error) {
+      console.error('Error syncing user:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/auth/user', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUserBySupabaseId(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Apply auth middleware to all other API routes
   // Use mock auth for development or when service key is not available
   const authMiddleware = process.env.SUPABASE_SERVICE_ROLE_KEY ? requireAuth : mockAuth;
   app.use("/api", authMiddleware);
