@@ -14,7 +14,7 @@ export const companies = pgTable("companies", {
   email: text("email").notNull().unique(),
   phone: text("phone"),
   address: text("address"),
-  cnpj: text("cnpj"),
+  cnpj: text("CNPJ"),
   plan: text("plan", { enum: ['basic', 'premium', 'enterprise'] }).notNull().default('basic'),
   isActive: boolean("is_active").notNull().default(true),
   maxUsers: integer("max_users").default(10),
