@@ -34,6 +34,7 @@ const navigation: Array<{
   name: string;
   href?: string;
   icon: any;
+  current?: boolean;
   isExpandable?: boolean;
   subItems?: Array<{
     name: string;

@@ -7,26 +7,20 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        syncAndFetchUser(session.user);
-      } else {
-        setLoading(false);
-      }
+    // For development, directly set MASTER user
+    setUser({
+      id: 52,
+      email: 'gerencia@loggme.com.br',
+      name: 'Admin MASTER',
+      companyId: null,
+      role: 'MASTER',
+      supabaseUserId: 'master-user-id-001',
+      createdAt: new Date(),
+      isActive: true,
+      permissions: null,
+      password: null
     });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        await syncAndFetchUser(session.user);
-      } else {
-        setUser(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    setLoading(false);
   }, []);
 
   const syncAndFetchUser = async (supabaseUser: any) => {

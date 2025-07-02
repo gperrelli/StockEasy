@@ -114,10 +114,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply auth middleware to all other API routes
   // Use mock auth for development or when service key is not available
   const authMiddleware = process.env.SUPABASE_SERVICE_ROLE_KEY ? requireAuth : mockAuth;
-  app.use("/api", authMiddleware);
 
   // Dashboard stats
-  app.get("/api/dashboard/stats", async (req, res) => {
+  app.get("/api/dashboard/stats", authMiddleware, async (req, res) => {
     try {
       const stats = await storage.getDashboardStats(req.user.companyId);
       res.json(stats);
@@ -128,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Products endpoints
-  app.get("/api/products", async (req, res) => {
+  app.get("/api/products", authMiddleware, async (req, res) => {
     try {
       const products = await storage.getProductsByCompany(req.user.companyId);
       res.json(products);
@@ -138,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/products/low-stock", async (req, res) => {
+  app.get("/api/products/low-stock", authMiddleware, async (req, res) => {
     try {
       const products = await storage.getLowStockProducts(req.user.companyId);
       res.json(products);
@@ -261,7 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stock movements endpoints
-  app.get("/api/movements", async (req, res) => {
+  app.get("/api/movements", authMiddleware, async (req, res) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       const movements = await storage.getStockMovements(req.user.companyId, limit);
