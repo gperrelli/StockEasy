@@ -69,13 +69,13 @@ export const requireAuth = async (req: any, res: Response, next: NextFunction) =
 
 // Mock auth middleware for development (fallback when no service key)
 export const mockAuth = (req: any, res: Response, next: NextFunction) => {
-  // Set company user for testing frontend communication
+  // Set MASTER user for clean database testing
   req.user = {
-    id: 'mock-user-id-001',
-    email: 'admin@sistema.com',
-    name: 'Admin Sistema',
-    companyId: 2,  // Company with existing products
-    role: 'admin'
+    id: 'master-user-id-001',
+    email: 'gerencia@loggme.com.br',
+    name: 'Admin MASTER',
+    companyId: null,  // MASTER users have no company restriction
+    role: 'MASTER'
   };
   next();
 };
