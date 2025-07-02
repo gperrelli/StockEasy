@@ -32,32 +32,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Existing user found:', !!dbUser);
       
       if (!dbUser) {
-        console.log('Creating new user, looking for company...');
-        // Use company ID 2 which exists in our database
-        let defaultCompany = await storage.getCompany(2);
-        console.log('Company 2 found:', !!defaultCompany);
-        
-        if (!defaultCompany) {
-          // Fallback to company ID 4 if 2 doesn't exist
-          defaultCompany = await storage.getCompany(4);
-          console.log('Company 4 found:', !!defaultCompany);
-        }
-        
-        // At this point, we should have a valid company since we know IDs 2 and 4 exist
-        if (!defaultCompany) {
-          throw new Error('No valid company found for user assignment');
-        }
+        // Verificar se já existe usuário com este email (pode ter sido criado localmente)
+        const existingByEmail = await storage.getUserByEmail(user.email);
+        if (existingByEmail) {
+          console.log('User exists by email, updating supabaseUserId...');
+          // Atualizar o usuário existente com o supabaseUserId
+          dbUser = await storage.updateUser(existingByEmail.id, {
+            supabaseUserId: user.id
+          }, existingByEmail.companyId || null);
+          console.log('Updated existing user with Supabase ID');
+        } else {
+          console.log('Creating new user...');
+          
+          // Verificar se é o usuário MASTER
+          if (user.email === 'gerencia@loggme.com.br') {
+            console.log('Creating MASTER user...');
+            dbUser = await storage.createUser({
+              supabaseUserId: user.id,
+              name: user.user_metadata?.name || 'Admin Master',
+              email: user.email,
+              role: 'MASTER',
+              companyId: null, // MASTER não pertence a empresa específica
+              isActive: true
+            });
+            console.log('MASTER user created successfully');
+          } else {
+            // Para outros usuários, assign to company ID 2 (demo)
+            console.log('Looking for company...');
+            let defaultCompany = await storage.getCompany(2);
+            console.log('Company 2 found:', !!defaultCompany);
+            
+            if (!defaultCompany) {
+              defaultCompany = await storage.getCompany(4);
+              console.log('Company 4 found:', !!defaultCompany);
+            }
+            
+            if (!defaultCompany) {
+              throw new Error('No valid company found for user assignment');
+            }
 
-        console.log('Creating user with company ID:', defaultCompany.id);
-        dbUser = await storage.createUser({
-          supabaseUserId: user.id,
-          name: user.user_metadata?.name || user.email.split('@')[0],
-          email: user.email,
-          role: 'operador', // Default role
-          companyId: defaultCompany.id,
-          isActive: true
-        });
-        console.log('User created successfully');
+            console.log('Creating user with company ID:', defaultCompany.id);
+            dbUser = await storage.createUser({
+              supabaseUserId: user.id,
+              name: user.user_metadata?.name || user.email.split('@')[0],
+              email: user.email,
+              role: 'operador',
+              companyId: defaultCompany.id,
+              isActive: true
+            });
+            console.log('User created successfully');
+          }
+        }
       }
 
       res.json({ user: dbUser });
@@ -926,6 +951,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, suppliers: results });
     } catch (error) {
       console.error("Error generating bulk shopping list:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // MASTER user endpoints
+  // Companies management for MASTER users
+  app.get("/api/master/companies", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUserBySupabaseId(userId);
+      
+      if (!user || user.role !== 'MASTER') {
+        return res.status(403).json({ error: 'Access denied. MASTER role required.' });
+      }
+      
+      const companiesList = await db.select().from(companies).orderBy(asc(companies.name));
+      res.json(companiesList);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // All users management for MASTER users  
+  app.get("/api/master/users", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUserBySupabaseId(userId);
+      
+      if (!user || user.role !== 'MASTER') {
+        return res.status(403).json({ error: 'Access denied. MASTER role required.' });
+      }
+      
+      // Get all users across all companies
+      const allUsers = await db.select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        companyId: users.companyId,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+        companyName: companies.name
+      })
+      .from(users)
+      .leftJoin(companies, eq(users.companyId, companies.id))
+      .orderBy(asc(users.name));
+      
+      res.json(allUsers);
+    } catch (error) {
+      console.error("Error fetching all users:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Assign company to Admin user (MASTER only)
+  app.post("/api/master/users/:userId/assign-company", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUserBySupabaseId(userId);
+      
+      if (!user || user.role !== 'MASTER') {
+        return res.status(403).json({ error: 'Access denied. MASTER role required.' });
+      }
+      
+      const targetUserId = parseInt(req.params.userId);
+      const { companyId, role } = req.body;
+      
+      if (role === 'MASTER') {
+        return res.status(400).json({ error: 'Only MASTER users can assign MASTER role.' });
+      }
+      
+      const updatedUser = await storage.updateUser(targetUserId, {
+        companyId,
+        role: role || 'admin'
+      }, null); // MASTER can update any user
+      
+      if (!updatedUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error assigning company to user:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

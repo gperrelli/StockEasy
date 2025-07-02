@@ -136,10 +136,14 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async updateUser(id: number, user: Partial<InsertUser>, companyId: number): Promise<User | undefined> {
+  async updateUser(id: number, user: Partial<InsertUser>, companyId: number | null): Promise<User | undefined> {
+    const whereCondition = companyId !== null 
+      ? and(eq(users.id, id), eq(users.companyId, companyId))
+      : eq(users.id, id); // Para usuários MASTER sem companyId
+      
     const result = await db.update(users)
       .set(user)
-      .where(and(eq(users.id, id), eq(users.companyId, companyId)))
+      .where(whereCondition)
       .returning();
     return result[0];
   }

@@ -26,6 +26,7 @@ import CadastroFornecedores from "@/pages/cadastros/Fornecedores";
 
 // Super Admin Pages
 import SuperAdminEmpresas from "@/pages/super-admin/Empresas";
+import MasterDashboard from "@/pages/master/Dashboard";
 import Operations from "@/pages/Operations";
 
 function AuthenticatedApp() {
@@ -44,6 +45,9 @@ function AuthenticatedApp() {
         <Route path="/cadastros/usuarios" component={CadastroUsuarios} />
         <Route path="/cadastros/produtos" component={CadastroProdutos} />
         <Route path="/cadastros/fornecedores" component={CadastroFornecedores} />
+        
+        {/* MASTER Routes */}
+        <Route path="/master/dashboard" component={MasterDashboard} />
         
         {/* Super Admin Routes */}
         <Route path="/super-admin/empresas" component={SuperAdminEmpresas} />

@@ -37,8 +37,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   password: text("password"), // Optional for Supabase users
   name: text("name").notNull(),
-  companyId: integer("company_id").references(() => companies.id).notNull(),
-  role: text("role", { enum: ['admin', 'gerente', 'operador'] }).notNull().default("operador"),
+  companyId: integer("company_id").references(() => companies.id), // Nullable for MASTER users
+  role: text("role", { enum: ['MASTER', 'admin', 'gerente', 'operador'] }).notNull().default("operador"),
   supabaseUserId: text("supabase_user_id").unique(),
   isActive: boolean("is_active").notNull().default(true),
   permissions: text("permissions").array(), // Array of specific permissions

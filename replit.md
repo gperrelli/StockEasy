@@ -155,6 +155,12 @@ Changelog:
   * Fixed database connection errors and PostgreSQL query formatting issues
   * System now runs with mock authentication when Supabase service key not available
   * Authentication foundation ready for complete Supabase migration with RLS
+- July 02, 2025. MASTER User Role Implementation:
+  * Added MASTER role type to user schema (highest privilege level)
+  * Created MASTER user (gerencia@loggme.com.br) as SaaS owner with system-wide permissions
+  * Updated user sync endpoint to handle duplicate email conflicts and MASTER users without companyId
+  * Modified storage layer to support nullable companyId for MASTER users
+  * MASTER users can manage multiple companies and assign admin roles across the platform
 ```
 
 ## User Preferences

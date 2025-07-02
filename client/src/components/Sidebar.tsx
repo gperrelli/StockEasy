@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   LayoutDashboard, 
   Package, 
@@ -22,7 +24,6 @@ import {
   Crown,
   Shield
 } from "lucide-react";
-import { useState } from "react";
 
 interface SidebarProps {
   open: boolean;
@@ -135,17 +136,31 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const [cadastrosOpen, setCadastrosOpen] = useState(false);
   const [superAdminOpen, setSuperAdminOpen] = useState(false);
   
-  // Mock user role for demonstration - in real app this would come from auth context
-  const userRole = "admin"; // admin, gerente, operador, super_admin
-  const isSuperAdmin = userRole === "super_admin";
+  // Get user from auth context
+  const { user } = useAuth();
+  const userRole = user?.role || "operador";
+  const isMaster = userRole === "MASTER";
+  const isAdmin = userRole === "admin" || isMaster;
   
   // Filter navigation based on user role
   const getFilteredNavigation = () => {
     const baseNav = [...navigation];
     
-    // Add Super Admin navigation for super admins only
-    if (isSuperAdmin) {
-      return [...baseNav, ...superAdminNavigation];
+    // Add MASTER navigation for MASTER users only
+    if (isMaster) {
+      baseNav.push({
+        name: "MASTER",
+        href: "#",
+        icon: Crown,
+        isExpandable: true,
+        subItems: [
+          {
+            name: "Dashboard",
+            href: "/master/dashboard",
+            icon: BarChart3,
+          },
+        ],
+      });
     }
     
     return baseNav;
