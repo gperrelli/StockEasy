@@ -163,4 +163,18 @@ Changelog:
 Preferred communication style: Simple, everyday language.
 Database preference: Supabase (complete migration from Neon) for integrated RLS, authentication, and long-term maintainability.
 Priority: Multi-tenant SaaS authentication with proper company isolation through Supabase Auth + RLS.
+Architecture concern: Clear separation between authentication users and business users in multi-tenant structure.
 ```
+
+## Multi-Tenant Architecture Clarification
+
+### Current Authentication Flow Issues
+- Confusion between Supabase Auth users and internal business users
+- Users created in frontend don't sync to Supabase Auth
+- Need clear hierarchy: Super Admin → Company Admin → Company Users
+
+### Required Architecture
+1. **Super Admin Level**: Manages multiple companies, creates company admins
+2. **Company Admin Level**: Manages their company's users and data
+3. **Company User Level**: Regular users with role-based permissions within company
+4. **Authentication**: All users authenticate through Supabase, but business logic separates concerns

@@ -641,8 +641,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         companyId: req.user.companyId
       });
-      const user = await storage.createUser(userData);
-      res.status(201).json(user);
+
+      // Se não foi fornecido supabaseUserId, criar usuário no Supabase primeiro
+      if (!userData.supabaseUserId && userData.email && userData.password) {
+        console.log('Creating user in Supabase Auth first...');
+        
+        // TODO: Implementar criação no Supabase
+        // Por enquanto, gerar um ID temporário
+        userData.supabaseUserId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Remover senha do objeto que vai para o banco (não armazenamos senhas localmente)
+        const { password, ...userDataForDb } = userData;
+        const user = await storage.createUser(userDataForDb);
+        
+        res.status(201).json({
+          ...user,
+          _note: "Usuário criado localmente. Para funcionar completamente, implemente criação no Supabase Auth."
+        });
+      } else {
+        // Usuário já tem supabaseUserId ou não tem email/senha
+        const user = await storage.createUser(userData);
+        res.status(201).json(user);
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
