@@ -222,6 +222,14 @@ Changelog:
   * Verified system completely clean: 1 MASTER user (gerencia@loggme.com.br), 0 companies, all other tables empty
   * RLS policies created for both development (permissive) and production-ready multi-tenant security
   * System now ready for genuine multi-tenant deployment with proper data isolation
+  * **IMPORTANT**: Database connection method established - use Supabase client directly for data modifications
+  * Drizzle ORM for application logic, Supabase client for administrative operations and RLS management
+- July 02, 2025. Sistema limpo, RLS ativado e UX melhorado:
+  * Confirmada limpeza definitiva do banco de dados Supabase via cliente direto 
+  * RLS forçadamente habilitado em todas as 10 tabelas principais (rowsecurity = true)
+  * Removido campo confuso "ID do Supabase" do formulário de cadastro de usuários
+  * Sistema pronto para criar primeiro usuário e empresa com ambiente totalmente limpo
+  * Conexão banco documentada: Supabase client para admin, Drizzle ORM para aplicação
 ```
 
 ## User Preferences

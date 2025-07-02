@@ -52,7 +52,6 @@ const userFormSchema = z.object({
   }),
   companyId: z.number().nullable().optional(), // Opcional para MASTER users
   isActive: z.boolean().default(true),
-  supabaseUserId: z.string().optional(), // Opcional
 });
 
 type UserFormData = z.infer<typeof userFormSchema>;
@@ -93,7 +92,6 @@ export default function CadastroUsuarios() {
       role: "operador",
       companyId: null,
       isActive: true,
-      supabaseUserId: "",
     },
   });
 
@@ -200,7 +198,6 @@ export default function CadastroUsuarios() {
       email: user.email,
       role: user.role,
       isActive: user.isActive,
-      supabaseUserId: user.supabaseUserId || "",
     });
     setIsDialogOpen(true);
   };
@@ -297,7 +294,6 @@ export default function CadastroUsuarios() {
                   email: "",
                   role: "operador",
                   isActive: true,
-                  supabaseUserId: "",
                 });
               }}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -360,19 +356,6 @@ export default function CadastroUsuarios() {
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="supabaseUserId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>ID do Supabase *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="ID único do usuário no Supabase" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                   
                   <FormField
                     control={form.control}
