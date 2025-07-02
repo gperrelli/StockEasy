@@ -17,6 +17,7 @@ import Products from "@/pages/Products";
 import Movements from "@/pages/Movements";
 import Suppliers from "@/pages/Suppliers";
 import Checklist from "@/pages/Checklist";
+import MeuPerfil from "@/pages/MeuPerfil";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 
@@ -54,6 +55,7 @@ function AuthenticatedApp() {
         <Route path="/suppliers" component={Suppliers} />
         <Route path="/checklist" component={Checklist} />
         <Route path="/operations" component={Operations} />
+        <Route path="/meu-perfil" component={MeuPerfil} />
         
         {/* Cadastros Routes */}
         <Route path="/cadastros/categorias" component={CadastroCategorias} />

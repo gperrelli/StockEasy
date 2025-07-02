@@ -182,6 +182,13 @@ Changelog:
   * User registration flow now works: Supabase Auth → auto-sync to users table via /api/auth/sync-user
   * System loads authentic data: 1 company (Pizzaria do João), 4 users from real Supabase
   * Authentication system properly distinguishes between Supabase Auth users and business users
+- July 02, 2025. Enhanced Authentication System with Profile Management & Password Recovery:
+  * Added comprehensive "Meu Perfil" page with user profile display and logout functionality
+  * Implemented CNPJ field in companies table and registration screen for proper business registration
+  * Created password recovery functionality integrated with Supabase Auth (resetPasswordForEmail)
+  * Enhanced login screen with three modes: login, registration, and password recovery
+  * Added navigation buttons between different authentication modes with proper state management
+  * Improved user interface with conditional field display based on current authentication mode
 ```
 
 ## User Preferences

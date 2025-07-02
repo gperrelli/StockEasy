@@ -99,6 +99,11 @@ const navigation: Array<{
     href: "/reports",
     icon: BarChart3,
   },
+  {
+    name: "Meu Perfil",
+    href: "/meu-perfil",
+    icon: Shield,
+  },
 ];
 
 // Super Admin navigation for system administrators
