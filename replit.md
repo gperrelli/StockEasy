@@ -175,6 +175,13 @@ Changelog:
   * System confirmed working with authentic Supabase data, not mock data
   * Database contains: 12 real users, 2 companies, 1 MASTER user with companyId=null
   * MASTER dashboard displaying real statistics and user/company management data
+- July 02, 2025. Complete Migration to Supabase & User Registration System Fixed:
+  * Successfully migrated from Neon Database to authentic Supabase database
+  * Fixed user registration form compatibility with current database schema (added MASTER role, optional fields)
+  * Implemented real Supabase authentication with automatic user sync to business tables
+  * User registration flow now works: Supabase Auth → auto-sync to users table via /api/auth/sync-user
+  * System loads authentic data: 1 company (Pizzaria do João), 4 users from real Supabase
+  * Authentication system properly distinguishes between Supabase Auth users and business users
 ```
 
 ## User Preferences

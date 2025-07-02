@@ -46,29 +46,33 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 const userFormSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  role: z.enum(["admin", "gerente", "operador"], {
+  password: z.string().optional(), // Opcional para usuários Supabase
+  role: z.enum(["MASTER", "admin", "gerente", "operador"], {
     required_error: "Role é obrigatório",
   }),
+  companyId: z.number().nullable().optional(), // Opcional para MASTER users
   isActive: z.boolean().default(true),
-  supabaseUserId: z.string().min(1, "ID do Supabase é obrigatório"),
+  supabaseUserId: z.string().optional(), // Opcional
 });
 
 type UserFormData = z.infer<typeof userFormSchema>;
 
 const roleLabels = {
+  MASTER: "MASTER",
   admin: "Administrador",
   gerente: "Gerente", 
   operador: "Operador",
 };
 
 const roleColors = {
+  MASTER: "bg-purple-100 text-purple-800",
   admin: "bg-red-100 text-red-800",
   gerente: "bg-blue-100 text-blue-800",
   operador: "bg-green-100 text-green-800",
 };
 
 const roleDescriptions = {
+  MASTER: "Proprietário do SaaS, pode gerenciar todas as empresas e usuários do sistema",
   admin: "Acesso total ao sistema, pode gerenciar usuários e configurações",
   gerente: "Pode gerenciar produtos, fornecedores e operações diárias",
   operador: "Acesso básico para registrar movimentações e consultar dados",
@@ -87,6 +91,7 @@ export default function CadastroUsuarios() {
       email: "",
       password: "",
       role: "operador",
+      companyId: null,
       isActive: true,
       supabaseUserId: "",
     },

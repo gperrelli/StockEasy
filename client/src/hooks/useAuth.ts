@@ -7,20 +7,44 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // For development, directly set MASTER user
-    setUser({
-      id: 52,
-      email: 'gerencia@loggme.com.br',
-      name: 'Admin MASTER',
-      companyId: null,
-      role: 'MASTER',
-      supabaseUserId: 'master-user-id-001',
-      createdAt: new Date(),
-      isActive: true,
-      permissions: null,
-      password: null
-    });
-    setLoading(false);
+    let mounted = true;
+
+    // Check current auth state
+    const initializeAuth = async () => {
+      try {
+        const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+        
+        if (supabaseUser && mounted) {
+          await syncAndFetchUser(supabaseUser);
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        setLoading(false);
+      }
+    };
+
+    // Listen to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+
+        if (event === 'SIGNED_IN' && session?.user) {
+          await syncAndFetchUser(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setLoading(false);
+        }
+      }
+    );
+
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe();
+    };
   }, []);
 
   const syncAndFetchUser = async (supabaseUser: any) => {
