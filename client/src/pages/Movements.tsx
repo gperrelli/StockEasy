@@ -154,41 +154,35 @@ export default function Movements() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Movimentação de Estoque</h1>
-            <p className="text-muted-foreground">Registre entradas e saídas de produtos</p>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => openMovementDialog('entrada')}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Entrada
-            </Button>
-            <Button 
-              onClick={() => openMovementDialog('saida')}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              <Minus className="h-4 w-4 mr-2" />
-              Saída
-            </Button>
-            <Button 
-              onClick={() => openMovementDialog('ajuste')}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              Ajuste
-            </Button>
-          </div>
-
-          <Dialog 
-            open={isAddDialogOpen} 
-            onOpenChange={setIsAddDialogOpen}
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-2">
+          <Button 
+            onClick={() => openMovementDialog('entrada')}
+            className="bg-green-600 hover:bg-green-700"
           >
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Entrada
+          </Button>
+          <Button 
+            onClick={() => openMovementDialog('saida')}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            <Minus className="h-4 w-4 mr-2" />
+            Saída
+          </Button>
+          <Button 
+            onClick={() => openMovementDialog('ajuste')}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Ajuste
+          </Button>
+        </div>
+
+        <Dialog 
+          open={isAddDialogOpen} 
+          onOpenChange={setIsAddDialogOpen}
+        >
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>
@@ -352,8 +346,7 @@ export default function Movements() {
                 </form>
               </Form>
             </DialogContent>
-          </Dialog>
-        </div>
+        </Dialog>
 
         {/* Filters */}
         <Card>
