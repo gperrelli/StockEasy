@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { requireAuth, mockAuth } from "./supabaseAuth";
+import { db } from "./db";
 import { 
   insertProductSchema,
   insertStockMovementSchema,
@@ -11,6 +12,7 @@ import {
   insertChecklistTemplateSchema,
   insertChecklistItemSchema,
   insertChecklistExecutionSchema,
+  companies,
   type Product
 } from "@shared/schema";
 import { z } from "zod";
@@ -27,21 +29,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if user already exists in our database
       let dbUser = await storage.getUserBySupabaseId(user.id);
+      console.log('Existing user found:', !!dbUser);
       
       if (!dbUser) {
-        // Create new user in our database
-        // For now, assign to a default company (company ID 1)
-        // In production, this would be determined by business logic
-        let defaultCompany = await storage.getCompany(1);
+        console.log('Creating new user, looking for company...');
+        // Use company ID 2 which exists in our database
+        let defaultCompany = await storage.getCompany(2);
+        console.log('Company 2 found:', !!defaultCompany);
+        
         if (!defaultCompany) {
-          // Create a default company if it doesn't exist
-          defaultCompany = await storage.createCompany({
-            name: 'Empresa Padrão',
-            email: 'admin@empresa.com',
-            phone: '(11) 99999-9999'
-          });
+          // Fallback to company ID 4 if 2 doesn't exist
+          defaultCompany = await storage.getCompany(4);
+          console.log('Company 4 found:', !!defaultCompany);
+        }
+        
+        // At this point, we should have a valid company since we know IDs 2 and 4 exist
+        if (!defaultCompany) {
+          throw new Error('No valid company found for user assignment');
         }
 
+        console.log('Creating user with company ID:', defaultCompany.id);
         dbUser = await storage.createUser({
           supabaseUserId: user.id,
           name: user.user_metadata?.name || user.email.split('@')[0],
@@ -50,6 +57,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           companyId: defaultCompany.id,
           isActive: true
         });
+        console.log('User created successfully');
       }
 
       res.json({ user: dbUser });
