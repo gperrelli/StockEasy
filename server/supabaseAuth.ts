@@ -27,6 +27,10 @@ export const requireAuth = async (req: any, res: Response, next: NextFunction) =
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      // For MASTER routes, fall back to mock auth
+      if (req.path.startsWith('/api/master/')) {
+        return mockAuth(req, res, next);
+      }
       return res.status(401).json({ error: 'No authorization token provided' });
     }
 

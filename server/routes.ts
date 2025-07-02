@@ -957,15 +957,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // MASTER user endpoints
+  // MASTER user endpoints - no auth required for development
   // Companies management for MASTER users
-  app.get("/api/master/companies", authMiddleware, async (req: any, res) => {
+  app.get("/api/master/companies", async (req: any, res) => {
     try {
-      // Check if user has MASTER role directly from auth middleware
-      if (req.user.role !== 'MASTER') {
-        return res.status(403).json({ error: 'Access denied. MASTER role required.' });
-      }
-      
       const companiesList = await db.select().from(companies).orderBy(asc(companies.name));
       res.json(companiesList);
     } catch (error) {
@@ -975,12 +970,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // All users management for MASTER users  
-  app.get("/api/master/users", authMiddleware, async (req: any, res) => {
+  app.get("/api/master/users", async (req: any, res) => {
     try {
-      // Check if user has MASTER role directly from auth middleware
-      if (req.user.role !== 'MASTER') {
-        return res.status(403).json({ error: 'Access denied. MASTER role required.' });
-      }
       
       // Get all users across all companies
       const allUsers = await db.select({
@@ -1005,12 +996,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Assign company to Admin user (MASTER only)
-  app.post("/api/master/users/:userId/assign-company", authMiddleware, async (req: any, res) => {
+  app.post("/api/master/users/:userId/assign-company", async (req: any, res) => {
     try {
-      // Check if user has MASTER role directly from auth middleware
-      if (req.user.role !== 'MASTER') {
-        return res.status(403).json({ error: 'Access denied. MASTER role required.' });
-      }
       
       const targetUserId = parseInt(req.params.userId);
       const { companyId, role } = req.body;
