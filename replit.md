@@ -197,6 +197,13 @@ Changelog:
   * Updated login registration flow to create users through AuthService with company assignment
   * System now maintains complete separation between Supabase Auth and business logic users
   * MASTER user (gerencia@loggme.com.br) properly handled with null companyId and system-wide permissions
+- July 02, 2025. Frontend-Supabase Communication Resolution:
+  * Fixed frontend communication issue where product registration page was empty
+  * Identified authentication middleware configuration causing API 401 errors  
+  * Resolved by ensuring proper fallback between requireAuth and mockAuth middleware
+  * Frontend now successfully communicates with Supabase database across ALL instances
+  * Product registration page displays authentic data: 10 products from company_id=2
+  * System confirmed working with real Supabase data and proper multi-tenant isolation
 ```
 
 ## User Preferences

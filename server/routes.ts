@@ -95,8 +95,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Apply auth middleware to all other API routes
-  // Force mock auth for now to fix frontend communication issue
-  const authMiddleware = mockAuth;
+  // Use real Supabase auth when available, fallback to mock for development
+  const authMiddleware = process.env.SUPABASE_SERVICE_ROLE_KEY ? requireAuth : mockAuth;
 
   // Dashboard stats
   app.get("/api/dashboard/stats", authMiddleware, async (req, res) => {
