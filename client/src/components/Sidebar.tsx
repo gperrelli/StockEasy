@@ -83,9 +83,14 @@ const navigation: Array<{
     icon: ArrowUpDown,
   },
   {
-    name: "Operações",
+    name: "Checklist",
     href: "/checklist",
     icon: ClipboardCheck,
+  },
+  {
+    name: "Operações",
+    href: "/operations",
+    icon: Settings,
   },
   {
     name: "Relatórios",
