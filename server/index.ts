@@ -40,9 +40,9 @@ app.use((req, res, next) => {
 app.use((req: any, res, next) => {
   // Mock user for demo purposes (using Supabase data)
   req.user = {
-    id: 3, // João Silva
-    email: 'joao@pizzaria.com',
-    name: 'João Silva',
+    id: 1, // Admin Sistema
+    email: 'admin@sistema.com',
+    name: 'Admin Sistema',
     companyId: 2,
     role: 'admin'
   };

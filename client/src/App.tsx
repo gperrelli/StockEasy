@@ -24,6 +24,7 @@ import CadastroFornecedores from "@/pages/cadastros/Fornecedores";
 
 // Super Admin Pages
 import SuperAdminEmpresas from "@/pages/super-admin/Empresas";
+import Operations from "@/pages/Operations";
 
 function Router() {
   return (
@@ -34,6 +35,7 @@ function Router() {
         <Route path="/movements" component={Movements} />
         <Route path="/suppliers" component={Suppliers} />
         <Route path="/checklist" component={Checklist} />
+        <Route path="/operations" component={Operations} />
         <Route path="/login" component={Login} />
         
         {/* Cadastros Routes */}
