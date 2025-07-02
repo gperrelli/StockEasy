@@ -49,6 +49,8 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserBySupabaseId(supabaseUserId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, user: Partial<InsertUser>, companyId: number): Promise<User | undefined>;
+  deleteUser(id: number, companyId: number): Promise<boolean>;
   getUsersByCompany(companyId: number): Promise<User[]>;
 
   // Supplier methods
@@ -132,6 +134,20 @@ export class DatabaseStorage implements IStorage {
   async createUser(user: InsertUser): Promise<User> {
     const result = await db.insert(users).values(user).returning();
     return result[0];
+  }
+
+  async updateUser(id: number, user: Partial<InsertUser>, companyId: number): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set(user)
+      .where(and(eq(users.id, id), eq(users.companyId, companyId)))
+      .returning();
+    return result[0];
+  }
+
+  async deleteUser(id: number, companyId: number): Promise<boolean> {
+    const result = await db.delete(users)
+      .where(and(eq(users.id, id), eq(users.companyId, companyId)));
+    return result.rowCount > 0;
   }
 
   async getUsersByCompany(companyId: number): Promise<User[]> {

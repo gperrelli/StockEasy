@@ -45,6 +45,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 const userFormSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
   role: z.enum(["admin", "gerente", "operador"], {
     required_error: "Role é obrigatório",
   }),
@@ -83,6 +84,7 @@ export default function CadastroUsuarios() {
     defaultValues: {
       name: "",
       email: "",
+      password: "",
       role: "operador",
       isActive: true,
       supabaseUserId: "",
@@ -334,6 +336,20 @@ export default function CadastroUsuarios() {
                       )}
                     />
                   </div>
+
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Senha *</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="Senha (mínimo 6 caracteres)" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}
