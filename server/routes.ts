@@ -8,6 +8,8 @@ import {
   insertStockMovementSchema,
   insertSupplierSchema,
   insertCategorySchema,
+  companies,
+  users,
   insertUserSchema,
   insertChecklistTemplateSchema,
   insertChecklistItemSchema,
@@ -15,6 +17,7 @@ import {
   companies,
   type Product
 } from "@shared/schema";
+import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {

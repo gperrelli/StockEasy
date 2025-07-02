@@ -126,6 +126,19 @@ export default function MasterDashboard() {
     }
   };
 
+  // Handler functions for filters
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleCompanyFilterChange = (value: string) => {
+    setSelectedCompany(value === "all" ? null : parseInt(value));
+  };
+
+  const handleRoleFilterChange = (value: string) => {
+    setSelectedRole(value === "all" ? "" : value);
+  };
+
   const stats = {
     totalUsers: allUsers.length,
     totalCompanies: companies.length,
@@ -214,7 +227,7 @@ export default function MasterDashboard() {
                 <Input
                   placeholder="Buscar usuários..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
                   className="pl-10 w-64"
                 />
               </div>
@@ -241,6 +254,7 @@ export default function MasterDashboard() {
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="MASTER">MASTER</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="gerente">Gerente</SelectItem>
                 <SelectItem value="operador">Operador</SelectItem>

@@ -148,18 +148,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     
     // Add MASTER navigation for MASTER users only
     if (isMaster) {
-      baseNav.push({
-        name: "MASTER",
-        href: "#",
+      baseNav.unshift({
+        name: "MASTER Panel",
+        href: "/master/dashboard",
         icon: Crown,
-        isExpandable: true,
-        subItems: [
-          {
-            name: "Dashboard",
-            href: "/master/dashboard",
-            icon: BarChart3,
-          },
-        ],
+        current: location === "/master/dashboard",
       });
     }
     
