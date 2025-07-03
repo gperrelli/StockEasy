@@ -257,6 +257,14 @@ Changelog:
   * TESTADO: Multi-tenancy com isolamento perfeito - cada empresa vê apenas seus dados
   * CONFIRMADO: RLS ativo protegendo dados entre empresas diferentes
   * SISTEMA: Pronto para produção com cadastro de empresas e usuários funcionais
+- July 03, 2025. Correção Crítica - Schema Consistency e Endpoint Signup:
+  * CORRIGIDO: Inconsistência entre schema TypeScript e estrutura real banco Supabase
+  * RESOLVIDO: Campo "CNPJ" vs "cnpj" - schema agora corresponde exatamente ao banco
+  * IMPLEMENTADO: Abordagem atômica usando cliente Supabase direto para empresa + usuário
+  * CORRIGIDO: Mapeamento snake_case (company_id, supabase_user_id) vs camelCase
+  * VALIDADO: Signup completo funcionando - empresa ID 19, usuário ID 9 criados com sucesso
+  * ARQUITETURA: Cliente Supabase direto para evitar conflitos cache Drizzle ORM
+  * TESTE REALIZADO: curl signup retorna HTTP 200 com dados completos usuário e empresa
 ```
 
 ## User Preferences

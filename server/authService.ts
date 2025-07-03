@@ -17,10 +17,40 @@ export class AuthService {
     password: string;
     name: string;
     companyId?: number;
+    companyData?: any;
     role?: string;
   }): Promise<{ supabaseUser: any; customUser: User }> {
     try {
-      // Step 1: Create user in Supabase Auth
+      // Import the same Supabase client used in routes
+      const { supabase: routeSupabase } = await import('./db');
+      
+      let finalCompanyId = userData.companyId;
+
+      // Step 1: Create company if companyData is provided
+      if (userData.companyData && !userData.companyId) {
+        console.log('Creating company atomically in AuthService:', userData.companyData);
+        
+        const { data: createdCompany, error: companyError } = await routeSupabase
+          .from('companies')
+          .insert([{
+            name: userData.companyData.name,
+            email: userData.companyData.email,
+            cnpj: userData.companyData.CNPJ || null,
+            phone: userData.companyData.phone || null,
+            address: userData.companyData.address || null
+          }])
+          .select()
+          .single();
+
+        if (companyError) {
+          throw new Error(`Erro ao criar empresa: ${companyError.message}`);
+        }
+
+        finalCompanyId = createdCompany.id;
+        console.log('Company created atomically with ID:', finalCompanyId);
+      }
+
+      // Step 2: Create user in Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
@@ -39,17 +69,25 @@ export class AuthService {
         throw new Error('Usuário não foi criado no Supabase Auth');
       }
 
-      // Step 2: Create corresponding record in custom users table
-      const customUserData: InsertUser = {
+      // Step 3: Create corresponding record in custom users table
+      const customUserData = {
         email: userData.email,
         name: userData.name,
-        supabaseUserId: authData.user.id,
-        companyId: userData.companyId || null,
-        role: userData.role as any || 'operador',
-        isActive: true,
+        supabase_user_id: authData.user.id,
+        company_id: finalCompanyId || null,
+        role: userData.role || 'operador',
       };
 
-      const customUser = await storage.createUser(customUserData);
+      // Use the same Supabase client to ensure consistency
+      const { data: customUser, error: customUserError } = await routeSupabase
+        .from('users')
+        .insert([customUserData])
+        .select()
+        .single();
+
+      if (customUserError) {
+        throw new Error(`Erro ao criar usuário customizado: ${customUserError.message}`);
+      }
 
       return {
         supabaseUser: authData.user,

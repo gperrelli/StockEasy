@@ -58,39 +58,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // New user signup route - creates user in both Supabase Auth and custom table
   app.post('/api/auth/signup', async (req, res) => {
     try {
-      const { email, password, name, companyId, role = 'admin' } = req.body;
+      const { email, password, name, companyId, company, role = 'admin' } = req.body;
       
-      console.log('Signup attempt:', { email, name, companyId, role });
+      console.log('Full request body:', JSON.stringify(req.body, null, 2));
+      console.log('Signup attempt:', { email, name, companyId, company, role });
       
       if (!email || !password || !name) {
         return res.status(400).json({ error: 'Email, password, and name are required' });
       }
 
-      // Validate company exists if provided
-      if (companyId) {
-        const company = await storage.getCompany(companyId);
-        if (!company) {
-          return res.status(400).json({ 
-            error: 'Company not found',
-            message: 'The specified company does not exist'
-          });
-        }
-      }
+      let finalCompanyId = companyId;
 
       // Validate role type
       const validRoles = ['MASTER', 'admin', 'gerente', 'operador'];
       const userRole = validRoles.includes(role) ? role : 'admin';
 
-      console.log('Creating complete user with AuthService:', email);
+      console.log('Creating complete user with direct Supabase approach:', email);
       
-      // Use AuthService to create user in both Supabase Auth and custom table
-      const result = await authService.createUserComplete({
+      // Direct Supabase approach to avoid schema cache issues
+      const { supabase } = await import('./db');
+
+      // Step 1: Create company if company object is provided
+      if (company && !finalCompanyId) {
+        console.log('Creating company directly:', company);
+        
+        const { data: createdCompany, error: companyError } = await supabase
+          .from('companies')
+          .insert([{
+            name: company.name,
+            email: company.email,
+            cnpj: company.CNPJ || null,
+            phone: company.phone || null,
+            address: company.address || null
+          }])
+          .select()
+          .single();
+
+        if (companyError) {
+          console.error('Error creating company:', companyError);
+          return res.status(500).json({ 
+            error: 'Failed to create company',
+            message: companyError.message 
+          });
+        }
+
+        finalCompanyId = createdCompany.id;
+        console.log('Company created with ID:', finalCompanyId);
+      }
+
+      // Step 2: Create user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        name,
-        companyId: companyId || null,
-        role: userRole as 'MASTER' | 'admin' | 'gerente' | 'operador'
+        options: {
+          data: { name }
+        }
       });
+
+      if (authError) {
+        return res.status(400).json({ 
+          error: 'Auth creation failed',
+          message: authError.message 
+        });
+      }
+
+      if (!authData.user) {
+        return res.status(500).json({ 
+          error: 'Auth user not created' 
+        });
+      }
+
+      // Step 3: Create user in custom users table
+      const { data: customUser, error: customUserError } = await supabase
+        .from('users')
+        .insert([{
+          email: email,
+          name: name,
+          supabase_user_id: authData.user.id,
+          company_id: finalCompanyId || null,
+          role: userRole,
+        }])
+        .select()
+        .single();
+
+      if (customUserError) {
+        console.error('Error creating custom user:', customUserError);
+        return res.status(500).json({ 
+          error: 'Failed to create user',
+          message: customUserError.message 
+        });
+      }
+
+      const result = {
+        supabaseUser: authData.user,
+        customUser
+      };
       
       console.log('User created successfully:', result.customUser.id);
       
@@ -149,19 +211,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { name, email, CNPJ } = req.body;
       
-      console.log('Creating company:', { name, email, CNPJ });
+      console.log('Creating company with Supabase direct:', { name, email, cnpj: CNPJ });
       
       if (!name || !email) {
         return res.status(400).json({ error: 'Name and email are required' });
       }
 
-      const company = await storage.createCompany({
-        name,
-        email,
-        cnpj: CNPJ || null
-      });
+      // Use Supabase client directly to bypass Drizzle schema issues
+      const { supabase } = await import('./db');
+      const { data, error } = await supabase
+        .from('companies')
+        .insert([{
+          name,
+          email,
+          cnpj: CNPJ || null
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
       
-      res.json(company);
+      res.json(data);
     } catch (error: any) {
       console.error('Error creating company:', error);
       res.status(500).json({ 
