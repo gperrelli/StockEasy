@@ -89,6 +89,8 @@ export interface IStorage {
   createChecklistTemplate(template: InsertChecklistTemplate): Promise<ChecklistTemplate>;
   getChecklistItems(templateId: number): Promise<ChecklistItem[]>;
   createChecklistItem(item: InsertChecklistItem): Promise<ChecklistItem>;
+  updateChecklistItem(id: number, item: Partial<InsertChecklistItem>): Promise<ChecklistItem | undefined>;
+  deleteChecklistItem(id: number): Promise<boolean>;
   
   getChecklistExecutions(companyId: number, limit?: number): Promise<ChecklistExecutionWithDetails[]>;
   createChecklistExecution(execution: InsertChecklistExecution): Promise<ChecklistExecution>;
@@ -449,6 +451,21 @@ export class DatabaseStorage implements IStorage {
   async createChecklistItem(item: InsertChecklistItem): Promise<ChecklistItem> {
     const result = await db.insert(checklistItems).values(item).returning();
     return result[0];
+  }
+
+  async updateChecklistItem(id: number, item: Partial<InsertChecklistItem>): Promise<ChecklistItem | undefined> {
+    const result = await db.update(checklistItems)
+      .set(item)
+      .where(eq(checklistItems.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteChecklistItem(id: number): Promise<boolean> {
+    const result = await db.delete(checklistItems)
+      .where(eq(checklistItems.id, id))
+      .returning();
+    return result.length > 0;
   }
 
   async getChecklistExecutions(companyId: number, limit = 20): Promise<ChecklistExecutionWithDetails[]> {

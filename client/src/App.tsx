@@ -26,6 +26,7 @@ import CadastroCategorias from "@/pages/cadastros/Categorias";
 import CadastroUsuarios from "@/pages/cadastros/Usuarios";
 import CadastroProdutos from "@/pages/cadastros/Produtos";
 import CadastroFornecedores from "@/pages/cadastros/Fornecedores";
+import CadastroChecklist from "@/pages/cadastros/Checklist";
 
 // Super Admin Pages
 import SuperAdminEmpresas from "@/pages/super-admin/Empresas";
@@ -62,7 +63,7 @@ function AuthenticatedApp() {
         <Route path="/cadastros/usuarios" component={CadastroUsuarios} />
         <Route path="/cadastros/produtos" component={CadastroProdutos} />
         <Route path="/cadastros/fornecedores" component={CadastroFornecedores} />
-        <Route path="/cadastros/checklist" component={Checklist} />
+        <Route path="/cadastros/checklist" component={CadastroChecklist} />
         
         {/* MASTER Routes */}
         <Route path="/master/dashboard" component={MasterDashboard} />

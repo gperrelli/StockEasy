@@ -880,7 +880,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Checklist endpoints
-  app.get("/api/checklists/templates", async (req, res) => {
+  app.get("/api/checklists/templates", authMiddleware, async (req, res) => {
     try {
       const templates = await storage.getChecklistTemplatesByCompany(req.user.companyId);
       res.json(templates);
@@ -890,7 +890,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/checklists/templates/:id/items", async (req, res) => {
+  app.get("/api/checklists/templates/:id/items", authMiddleware, async (req, res) => {
     try {
       const templateId = parseInt(req.params.id);
       const items = await storage.getChecklistItems(templateId);
@@ -972,6 +972,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(execution);
     } catch (error) {
       console.error("Error completing checklist execution:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Checklist Items CRUD endpoints
+  app.post("/api/checklists/items", authMiddleware, async (req, res) => {
+    try {
+      const itemData = insertChecklistItemSchema.parse(req.body);
+      const item = await storage.createChecklistItem(itemData);
+      res.status(201).json(item);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error creating checklist item:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/checklists/items/:id", authMiddleware, async (req, res) => {
+    try {
+      const itemId = parseInt(req.params.id);
+      const itemData = insertChecklistItemSchema.partial().parse(req.body);
+      const item = await storage.updateChecklistItem(itemId, itemData);
+      
+      if (!item) {
+        return res.status(404).json({ message: "Checklist item not found" });
+      }
+      
+      res.json(item);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error updating checklist item:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/checklists/items/:id", authMiddleware, async (req, res) => {
+    try {
+      const itemId = parseInt(req.params.id);
+      const success = await storage.deleteChecklistItem(itemId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Checklist item not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting checklist item:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

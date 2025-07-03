@@ -83,19 +83,19 @@ export const requireAuth = async (req: any, res: Response, next: NextFunction) =
 export const mockAuth = async (req: any, res: Response, next: NextFunction) => {
   console.log("🔑 Mock Auth Middleware called for path:", req.path);
   
-  // Set MASTER user for clean database testing
+  // Set regular user for testing (company ID 21 - where we created the checklist data)
   req.user = {
-    id: 'master-user-id-001',
-    email: 'gerencia@loggme.com.br',
-    name: 'Admin MASTER',
-    companyId: null,  // MASTER users have no company restriction
-    role: 'MASTER'
+    id: 70,
+    email: 'bonitobeeroficial@gmail.com',
+    name: 'Bonito Beer',
+    companyId: 21,  // Use existing company with checklist data
+    role: 'admin'
   };
   
   console.log("🔑 Mock user set:", req.user);
   
-  // Set RLS context for MASTER user
-  await setRLSContext(52, null, 'MASTER'); // Using the actual MASTER user ID from database
+  // Set RLS context for the mock user  
+  await setRLSContext(70, 21, 'admin'); // Use the mock user's actual ID and company
   
   next();
 };
