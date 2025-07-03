@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -256,6 +257,9 @@ export default function CadastroFornecedores() {
                 <DialogTitle>
                   {editingSupplier ? "Editar Fornecedor" : "Novo Fornecedor"}
                 </DialogTitle>
+                <DialogDescription>
+                  {editingSupplier ? "Modifique as informações do fornecedor nos campos abaixo." : "Preencha os campos abaixo para adicionar um novo fornecedor ao sistema."}
+                </DialogDescription>
               </DialogHeader>
               
               <Form {...form}>

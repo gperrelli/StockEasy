@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -142,6 +143,9 @@ export default function ChecklistModal({ open, onClose }: ChecklistModalProps) {
             <ClipboardCheck className="text-primary mr-2 h-5 w-5" />
             Checklist Diário - {selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}
           </DialogTitle>
+          <DialogDescription>
+            Gerencie checklists operacionais para abertura, fechamento e limpeza.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="flex h-96">

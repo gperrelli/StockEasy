@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -276,6 +277,9 @@ export default function CadastroProdutos() {
                 <DialogTitle>
                   {editingProduct ? "Editar Produto" : "Novo Produto"}
                 </DialogTitle>
+                <DialogDescription>
+                  {editingProduct ? "Modifique as informações do produto nos campos abaixo." : "Preencha os campos abaixo para adicionar um novo produto ao estoque."}
+                </DialogDescription>
               </DialogHeader>
               
               <Form {...form}>

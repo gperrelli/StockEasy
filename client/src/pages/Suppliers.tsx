@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { 
@@ -190,6 +190,9 @@ export default function Suppliers() {
                 <DialogTitle>
                   {editingSupplier ? "Editar Fornecedor" : "Adicionar Fornecedor"}
                 </DialogTitle>
+                <DialogDescription>
+                  {editingSupplier ? "Modifique as informações do fornecedor selecionado." : "Preencha os campos abaixo para adicionar um novo fornecedor."}
+                </DialogDescription>
               </DialogHeader>
               
               <Form {...form}>

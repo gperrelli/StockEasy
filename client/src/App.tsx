@@ -62,6 +62,7 @@ function AuthenticatedApp() {
         <Route path="/cadastros/usuarios" component={CadastroUsuarios} />
         <Route path="/cadastros/produtos" component={CadastroProdutos} />
         <Route path="/cadastros/fornecedores" component={CadastroFornecedores} />
+        <Route path="/cadastros/checklist" component={Checklist} />
         
         {/* MASTER Routes */}
         <Route path="/master/dashboard" component={MasterDashboard} />

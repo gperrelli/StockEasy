@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -201,6 +202,9 @@ export default function CadastroCategoria() {
                 <DialogTitle>
                   {editingCategory ? "Editar Categoria" : "Nova Categoria"}
                 </DialogTitle>
+                <DialogDescription>
+                  {editingCategory ? "Modifique o nome e descrição da categoria." : "Preencha os campos para criar uma nova categoria de produtos."}
+                </DialogDescription>
               </DialogHeader>
               
               <Form {...form}>
