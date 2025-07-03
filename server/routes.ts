@@ -39,7 +39,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userData = {
           email: user.email,
           name: user.name || user.email.split('@')[0],
-          role: 'admin',
+          role: 'admin' as 'MASTER' | 'admin' | 'gerente' | 'operador',
           supabaseUserId: user.id,
           companyId: null // Will be assigned later
         };
@@ -65,13 +65,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Email, password, and name are required' });
       }
 
+      // Validate role type
+      const validRoles = ['MASTER', 'admin', 'gerente', 'operador'];
+      const userRole = validRoles.includes(role) ? role : 'operador';
+
       console.log('Creating new user:', email);
       
       // Create user in custom table (simplified for development)
       const userData = {
         email,
         name,
-        role,
+        role: userRole as 'MASTER' | 'admin' | 'gerente' | 'operador',
         supabaseUserId: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         companyId: companyId || null
       };

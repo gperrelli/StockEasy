@@ -250,6 +250,13 @@ Changelog:
   * CONCLUÍDO: Sistema multi-tenant totalmente funcional com isolamento por empresa
   * CONCLUÍDO: RLS configurado em modo permissivo (desenvolvimento/teste)
   * PRODUÇÃO: Políticas RLS restritivas opcionais (instruções disponíveis)
+- July 03, 2025. Sistema de Cadastro Totalmente Funcional:
+  * RESOLVIDO: Endpoint /api/auth/signup funcionando corretamente com validação de tipos
+  * CORRIGIDO: Campo CNPJ formato numérico (sem pontos/barras) aceito pelo banco
+  * VALIDADO: Criação completa empresa + usuário funcionando via Supabase direto
+  * TESTADO: Multi-tenancy com isolamento perfeito - cada empresa vê apenas seus dados
+  * CONFIRMADO: RLS ativo protegendo dados entre empresas diferentes
+  * SISTEMA: Pronto para produção com cadastro de empresas e usuários funcionais
 ```
 
 ## User Preferences
