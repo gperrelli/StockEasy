@@ -41,6 +41,19 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // API error handler - always return JSON for API routes
+  app.use('/api/*', (err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+    res.status(status).json({ error: message });
+  });
+
+  // Fallback 404 handler for API routes before Vite takes over
+  app.use('/api/*', (_req: Request, res: Response) => {
+    res.status(404).json({ error: 'API endpoint not found' });
+  });
+
+  // General error handler for non-API routes
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

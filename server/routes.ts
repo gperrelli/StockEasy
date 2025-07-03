@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { requireAuth, mockAuth } from "./supabaseAuth";
+import { authService } from "./authService";
 import { db } from "./db";
 import { 
   insertProductSchema,
@@ -57,7 +58,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // New user signup route - creates user in both Supabase Auth and custom table
   app.post('/api/auth/signup', async (req, res) => {
     try {
-      const { email, password, name, companyId, role = 'operador' } = req.body;
+      const { email, password, name, companyId, role = 'admin' } = req.body;
       
       console.log('Signup attempt:', { email, name, companyId, role });
       
@@ -65,34 +66,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Email, password, and name are required' });
       }
 
+      // Validate company exists if provided
+      if (companyId) {
+        const company = await storage.getCompany(companyId);
+        if (!company) {
+          return res.status(400).json({ 
+            error: 'Company not found',
+            message: 'The specified company does not exist'
+          });
+        }
+      }
+
       // Validate role type
       const validRoles = ['MASTER', 'admin', 'gerente', 'operador'];
-      const userRole = validRoles.includes(role) ? role : 'operador';
+      const userRole = validRoles.includes(role) ? role : 'admin';
 
-      console.log('Creating new user:', email);
+      console.log('Creating complete user with AuthService:', email);
       
-      // Create user in custom table (simplified for development)
-      const userData = {
+      // Use AuthService to create user in both Supabase Auth and custom table
+      const result = await authService.createUserComplete({
         email,
+        password,
         name,
-        role: userRole as 'MASTER' | 'admin' | 'gerente' | 'operador',
-        supabaseUserId: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        companyId: companyId || null
-      };
+        companyId: companyId || null,
+        role: userRole as 'MASTER' | 'admin' | 'gerente' | 'operador'
+      });
       
-      console.log('Creating user with data:', userData);
-      const user = await storage.createUser(userData);
+      console.log('User created successfully:', result.customUser.id);
       
       res.json({ 
         message: 'User created successfully',
-        user: user
+        user: result.customUser,
+        supabaseUser: {
+          id: result.supabaseUser.id,
+          email: result.supabaseUser.email
+        }
       });
       
     } catch (error: any) {
       console.error('Error creating user:', error);
+      
+      // Handle specific error types
+      if (error.code === '23503') {
+        return res.status(400).json({
+          error: 'Invalid reference',
+          message: 'Company ID does not exist'
+        });
+      }
+      
+      if (error.message?.includes('User already registered')) {
+        return res.status(400).json({
+          error: 'User already exists',
+          message: 'This email is already registered'
+        });
+      }
+      
       res.status(500).json({ 
         error: 'Failed to create user',
-        message: error.message 
+        message: error.message || 'Internal server error'
       });
     }
   });
