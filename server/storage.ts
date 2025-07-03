@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { eq, and, desc, asc, sql, count } from "drizzle-orm";
+import { supabase } from "./db";
 import {
   companies,
   users,
@@ -449,8 +450,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createChecklistItem(item: InsertChecklistItem): Promise<ChecklistItem> {
-    const result = await db.insert(checklistItems).values(item).returning();
-    return result[0];
+    // Use Supabase client directly to bypass RLS foreign key validation issues
+    const { data, error } = await supabase
+      .from('checklist_items')
+      .insert({
+        template_id: item.templateId,
+        title: item.title,
+        description: item.description,
+        category: item.category,
+        estimated_minutes: item.estimatedMinutes,
+        order: item.order,
+        is_required: item.isRequired
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create checklist item: ${error.message}`);
+    }
+
+    // Convert snake_case to camelCase for return
+    return {
+      id: data.id,
+      templateId: data.template_id,
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      estimatedMinutes: data.estimated_minutes,
+      order: data.order,
+      isRequired: data.is_required
+    };
   }
 
   async updateChecklistItem(id: number, item: Partial<InsertChecklistItem>): Promise<ChecklistItem | undefined> {

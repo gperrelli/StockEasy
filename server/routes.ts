@@ -281,7 +281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/products/:id", async (req, res) => {
+  app.get("/api/products/:id", authMiddleware, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const product = await storage.getProduct(id, req.user.companyId);
@@ -901,7 +901,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/checklists/executions", async (req, res) => {
+  app.get("/api/checklists/executions", mockAuth, async (req, res) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       const executions = await storage.getChecklistExecutions(req.user.companyId, limit);
