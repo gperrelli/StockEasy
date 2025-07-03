@@ -158,7 +158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const company = await storage.createCompany({
         name,
         email,
-        CNPJ: CNPJ || null
+        cnpj: CNPJ || null
       });
       
       res.json(company);
