@@ -74,8 +74,8 @@ export default function Login() {
         },
         body: JSON.stringify({
           name: companyName,
-          CNPJ: cnpj || null,
-          plan: 'basic'
+          email: email, // Required field
+          CNPJ: cnpj ? cnpj.replace(/\D/g, '') : null // Remove formatting, keep only numbers
         }),
       });
 

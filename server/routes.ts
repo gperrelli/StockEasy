@@ -113,6 +113,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Companies endpoint - no auth required for signup
+  app.post('/api/companies', async (req, res) => {
+    try {
+      const { name, email, CNPJ } = req.body;
+      
+      console.log('Creating company:', { name, email, CNPJ });
+      
+      if (!name || !email) {
+        return res.status(400).json({ error: 'Name and email are required' });
+      }
+
+      const company = await storage.createCompany({
+        name,
+        email,
+        CNPJ: CNPJ || null
+      });
+      
+      res.json(company);
+    } catch (error: any) {
+      console.error('Error creating company:', error);
+      res.status(500).json({ 
+        error: 'Failed to create company',
+        message: error.message 
+      });
+    }
+  });
+
   // Apply auth middleware to all other API routes
   // Force mock auth for development until RLS is properly configured
   const authMiddleware = mockAuth; // process.env.SUPABASE_SERVICE_ROLE_KEY ? requireAuth : mockAuth;
