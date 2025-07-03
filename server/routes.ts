@@ -14,12 +14,10 @@ import {
   insertChecklistTemplateSchema,
   insertChecklistItemSchema,
   insertChecklistExecutionSchema,
-  companies,
   type Product
 } from "@shared/schema";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { authService } from "./authService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth endpoints - don't require auth middleware
@@ -33,8 +31,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Syncing user:', user.email);
       
-      // Use AuthService to sync user from Supabase Auth
-      const dbUser = await authService.syncUserFromAuth(user.id);
+      // Simplified sync - check if user exists or create
+      let dbUser = await storage.getUserBySupabaseId(user.id);
+      
+      if (!dbUser) {
+        // Create new user from Supabase Auth data
+        const userData = {
+          email: user.email,
+          name: user.name || user.email.split('@')[0],
+          role: 'admin',
+          supabaseUserId: user.id,
+          companyId: null // Will be assigned later
+        };
+        
+        dbUser = await storage.createUser(userData);
+      }
       
       res.json({ user: dbUser });
     } catch (error) {
@@ -48,25 +59,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password, name, companyId, role = 'operador' } = req.body;
       
+      console.log('Signup attempt:', { email, name, companyId, role });
+      
       if (!email || !password || !name) {
         return res.status(400).json({ error: 'Email, password, and name are required' });
       }
 
       console.log('Creating new user:', email);
       
-      // Use AuthService to create complete user
-      const result = await authService.createUserComplete({
+      // Create user in custom table (simplified for development)
+      const userData = {
         email,
-        password,
         name,
-        companyId,
-        role
-      });
+        role,
+        supabaseUserId: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        companyId: companyId || null
+      };
+      
+      console.log('Creating user with data:', userData);
+      const user = await storage.createUser(userData);
       
       res.json({ 
         message: 'User created successfully',
-        user: result.customUser,
-        supabaseUser: result.supabaseUser
+        user: user
       });
       
     } catch (error: any) {
