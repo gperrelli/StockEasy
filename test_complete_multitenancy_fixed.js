@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -38,7 +37,7 @@ async function testCompleteMultiTenancyFixed() {
 
     for (const company of companies.slice(0, 5)) { // Limitar a 5 empresas para teste
       console.log(`\n🔧 Testando empresa: ${company.name} (ID: ${company.id})`);
-      
+
       const companyResult = {
         company: company,
         user: null,
@@ -54,7 +53,7 @@ async function testCompleteMultiTenancyFixed() {
         console.log('  👤 Criando usuário...');
         const userEmail = `teste${company.id}@${company.name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`;
         const supabaseUserId = `test-user-${company.id}-${Date.now()}`;
-        
+
         // Verificar se usuário já existe
         const { data: existingUser } = await supabase
           .from('users')
@@ -73,8 +72,7 @@ async function testCompleteMultiTenancyFixed() {
               email: userEmail,
               company_id: company.id,
               role: 'funcionario',
-              supabase_user_id: supabaseUserId,
-              is_active: true
+              supabase_user_id: supabaseUserId
             })
             .select()
             .single();
@@ -91,7 +89,7 @@ async function testCompleteMultiTenancyFixed() {
         // 2.2. Criar categoria para a empresa (com verificação de duplicatas)
         console.log('  📂 Criando categoria...');
         const categoryName = `Categoria Teste ${company.id}`;
-        
+
         const { data: existingCategory } = await supabase
           .from('categories')
           .select('id, name')
@@ -125,7 +123,7 @@ async function testCompleteMultiTenancyFixed() {
         // 2.3. Criar fornecedor para a empresa (com verificação de duplicatas)
         console.log('  🏪 Criando fornecedor...');
         const supplierName = `Fornecedor Teste ${company.id}`;
-        
+
         const { data: existingSupplier } = await supabase
           .from('suppliers')
           .select('id, name')
@@ -163,7 +161,7 @@ async function testCompleteMultiTenancyFixed() {
           const productName = `Produto Teste ${company.id}`;
           const category = companyResult.category || existingCategory;
           const supplier = companyResult.supplier || existingSupplier;
-          
+
           const { data: existingProduct } = await supabase
             .from('products')
             .select('id, name')
@@ -206,7 +204,7 @@ async function testCompleteMultiTenancyFixed() {
         // 2.5. Criar checklist template e item
         console.log('  📋 Criando template de checklist...');
         const templateName = `Checklist Teste ${company.id}`;
-        
+
         const { data: existingTemplate } = await supabase
           .from('checklist_templates')
           .select('id, name')
@@ -320,7 +318,7 @@ async function testCompleteMultiTenancyFixed() {
       const items = [result.user, result.category, result.supplier, result.product, result.checklist];
       const successCount = items.filter(Boolean).length;
       const errorCount = result.errors.length;
-      
+
       totalSuccess += successCount;
       totalErrors += errorCount;
       totalItems += 5; // 5 tipos de itens por empresa
@@ -328,7 +326,7 @@ async function testCompleteMultiTenancyFixed() {
       console.log(`🏢 ${result.company.name}:`);
       console.log(`  ✅ Criados com sucesso: ${successCount}/5`);
       console.log(`  ❌ Erros: ${errorCount}`);
-      
+
       if (errorCount > 0) {
         result.errors.forEach(error => {
           console.log(`    • ${error}`);
@@ -342,7 +340,7 @@ async function testCompleteMultiTenancyFixed() {
     console.log(`✅ Total de itens criados: ${totalSuccess}/${totalItems}`);
     console.log(`📈 Taxa de sucesso: ${successRate}%`);
     console.log(`❌ Total de erros: ${totalErrors}`);
-    
+
     if (totalErrors === 0) {
       console.log('🎉 MULTI-TENANCY FUNCIONANDO PERFEITAMENTE!');
       console.log('✅ Isolamento de dados confirmado');
