@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { setupRealtimeUpdates } from "./lib/supabase";
+import { DevModeManager } from "@/components/DevModeManager";
 
 // Components
 import Layout from "@/components/Layout";
@@ -102,6 +103,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <DevModeManager />
         <Toaster />
         <AppContent />
       </TooltipProvider>

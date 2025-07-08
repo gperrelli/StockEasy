@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { devLogoutAndClearCache } from '@/lib/devUtils';
 import type { User } from '@shared/schema';
 
 export function useAuth() {
@@ -138,5 +139,6 @@ export function useAuth() {
     loading,
     isAuthenticated: !!user,
     signOut,
+    devLogout: devLogoutAndClearCache,
   };
 }

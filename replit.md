@@ -265,6 +265,14 @@ Changelog:
   * VALIDADO: Signup completo funcionando - empresa ID 19, usuário ID 9 criados com sucesso
   * ARQUITETURA: Cliente Supabase direto para evitar conflitos cache Drizzle ORM
   * TESTE REALIZADO: curl signup retorna HTTP 200 com dados completos usuário e empresa
+- July 08, 2025. Sistema de Logout Automático de Desenvolvimento:
+  * IMPLEMENTADO: Utilitário devLogoutAndClearCache para limpeza automática de cache e sessão
+  * CRIADO: DevModeManager para gerenciar logout automático após mudanças no sistema
+  * ADICIONADO: Botão "Logout DEV" na página de perfil para limpeza manual em desenvolvimento
+  * CONFIGURADO: Logout automático executa após mudanças para garantir testes sempre iniciarem no login
+  * DOCUMENTADO: Preferência do usuário para logout automático após mudanças do agente
+  * FUNÇÃO: window.devReset() disponível no console para reset manual do sistema
+  * WORKFLOW: Todos os testes agora iniciam com estado limpo na tela de login
 ```
 
 ## User Preferences
@@ -274,6 +282,8 @@ Preferred communication style: Simple, everyday language.
 Database preference: Supabase (complete migration from Neon) for integrated RLS, authentication, and long-term maintainability.
 Priority: Multi-tenant SaaS authentication with proper company isolation through Supabase Auth + RLS.
 Architecture concern: Clear separation between authentication users and business users in multi-tenant structure.
+
+Development workflow preference: Every time changes or improvements are made through the agent, automatically logout any logged-in user and clear cache to ensure testing always starts from login screen.
 ```
 
 ## Multi-Tenant Architecture Clarification

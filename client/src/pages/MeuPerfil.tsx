@@ -12,7 +12,7 @@ import { LogOut, User, Mail, Building, Calendar, Shield, Loader2 } from 'lucide-
 import { useToast } from '@/hooks/use-toast';
 
 export default function MeuPerfil() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, devLogout } = useAuth();
   const { toast } = useToast();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -225,7 +225,7 @@ export default function MeuPerfil() {
               Ações que afetam sua sessão no sistema
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             <Button 
               onClick={handleLogout}
               variant="destructive"
@@ -244,6 +244,17 @@ export default function MeuPerfil() {
                 </>
               )}
             </Button>
+            
+            {process.env.NODE_ENV === 'development' && (
+              <Button 
+                onClick={devLogout}
+                variant="outline"
+                className="w-full border-orange-300 text-orange-700 hover:bg-orange-50"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout DEV (Limpar Cache)
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
