@@ -833,9 +833,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             name: userData.name,
             role: userData.role,
             company_id: userData.companyId,
-            supabase_user_id: userData.supabaseUserId,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            supabase_user_id: userData.supabaseUserId
           })
           .select()
           .single();
@@ -858,9 +856,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             name: userData.name,
             role: userData.role,
             company_id: userData.companyId,
-            supabase_user_id: userData.supabaseUserId || `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            supabase_user_id: userData.supabaseUserId || `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
           })
           .select()
           .single();

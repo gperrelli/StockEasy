@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { registerRoutes } from "./routes";
+import { setupVite } from "./vite";
 
 const app = express();
 const port = 5000;
@@ -9,9 +10,12 @@ const port = 5000;
 app.use(cors());
 app.use(express.json());
 
-// Routes
-registerRoutes(app);
+// Routes first (before Vite middleware)
+const server = await registerRoutes(app);
 
-app.listen(port, () => {
+// Setup Vite middleware for frontend
+await setupVite(app, server);
+
+server.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
 });
