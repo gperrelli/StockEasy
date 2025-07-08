@@ -453,7 +453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Suppliers endpoints
-  app.get("/api/suppliers", async (req, res) => {
+  app.get("/api/suppliers", authMiddleware, async (req, res) => {
     try {
       const suppliers = await storage.getSuppliersByCompany(req.user.companyId);
       res.json(suppliers);
@@ -513,7 +513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Categories endpoints
-  app.get("/api/categories", async (req, res) => {
+  app.get("/api/categories", authMiddleware, async (req, res) => {
     try {
       const categories = await storage.getCategoriesByCompany(req.user.companyId);
       res.json(categories);
