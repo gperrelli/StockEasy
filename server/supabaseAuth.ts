@@ -83,19 +83,52 @@ export const requireAuth = async (req: any, res: Response, next: NextFunction) =
 export const mockAuth = async (req: any, res: Response, next: NextFunction) => {
   console.log("🔑 Mock Auth Middleware called for path:", req.path);
   
-  // Set regular user for testing (company ID 21 - where we created the checklist data)
+  // Try to get real user from auth header first
+  const authHeader = req.headers.authorization;
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    
+    try {
+      // Try to get user from Supabase if possible
+      if (supabase) {
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+        
+        if (!error && user) {
+          // Get user profile from our database
+          const userProfile = await storage.getUserBySupabaseId(user.id);
+          
+          if (userProfile) {
+            req.user = {
+              id: user.id,
+              email: user.email!,
+              name: userProfile.name,
+              companyId: userProfile.companyId,
+              role: userProfile.role
+            };
+            
+            console.log("🔑 Real user from token:", req.user);
+            await setRLSContext(userProfile.id, userProfile.companyId, userProfile.role);
+            return next();
+          }
+        }
+      }
+    } catch (error) {
+      console.log("🔑 Token validation failed, falling back to mock user");
+    }
+  }
+  
+  // Fallback to mock user if no valid token or Supabase not available
   req.user = {
     id: 70,
     email: 'bonitobeeroficial@gmail.com',
     name: 'Bonito Beer',
-    companyId: 21,  // Use existing company with checklist data
+    companyId: 21,
     role: 'admin'
   };
   
   console.log("🔑 Mock user set:", req.user);
-  
-  // Set RLS context for the mock user  
-  await setRLSContext(70, 21, 'admin'); // Use the mock user's actual ID and company
+  await setRLSContext(70, 21, 'admin');
   
   next();
 };

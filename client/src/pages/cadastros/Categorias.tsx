@@ -37,7 +37,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const categoryFormSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
-  description: z.string().optional(),
+  description: z.string().optional().transform((val) => val === "" ? null : val),
 });
 
 type CategoryFormData = z.infer<typeof categoryFormSchema>;

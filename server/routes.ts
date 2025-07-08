@@ -25,16 +25,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/sync-user', async (req, res) => {
     try {
       const { user } = req.body;
-      
+
       if (!user || !user.id || !user.email) {
         return res.status(400).json({ error: 'Invalid user data' });
       }
 
       console.log('Syncing user:', user.email);
-      
+
       // Simplified sync - check if user exists or create
       let dbUser = await storage.getUserBySupabaseId(user.id);
-      
+
       if (!dbUser) {
         // Create new user from Supabase Auth data
         const userData = {
@@ -44,10 +44,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           supabaseUserId: user.id,
           companyId: null // Will be assigned later
         };
-        
+
         dbUser = await storage.createUser(userData);
       }
-      
+
       res.json({ user: dbUser });
     } catch (error) {
       console.error('Error syncing user:', error);
@@ -59,10 +59,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/signup', async (req, res) => {
     try {
       const { email, password, name, companyId, company, role = 'admin' } = req.body;
-      
+
       console.log('Full request body:', JSON.stringify(req.body, null, 2));
       console.log('Signup attempt:', { email, name, companyId, company, role });
-      
+
       if (!email || !password || !name) {
         return res.status(400).json({ error: 'Email, password, and name are required' });
       }
@@ -74,14 +74,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRole = validRoles.includes(role) ? role : 'admin';
 
       console.log('Creating complete user with direct Supabase approach:', email);
-      
+
       // Direct Supabase approach to avoid schema cache issues
       const { supabase } = await import('./db');
 
       // Step 1: Create company if company object is provided
       if (company && !finalCompanyId) {
         console.log('Creating company directly:', company);
-        
+
         const { data: createdCompany, error: companyError } = await supabase
           .from('companies')
           .insert([{
@@ -153,9 +153,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         supabaseUser: authData.user,
         customUser
       };
-      
+
       console.log('User created successfully:', result.customUser.id);
-      
+
       res.json({ 
         message: 'User created successfully',
         user: result.customUser,
@@ -164,10 +164,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: result.supabaseUser.email
         }
       });
-      
+
     } catch (error: any) {
       console.error('Error creating user:', error);
-      
+
       // Handle specific error types
       if (error.code === '23503') {
         return res.status(400).json({
@@ -175,14 +175,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: 'Company ID does not exist'
         });
       }
-      
+
       if (error.message?.includes('User already registered')) {
         return res.status(400).json({
           error: 'User already exists',
           message: 'This email is already registered'
         });
       }
-      
+
       res.status(500).json({ 
         error: 'Failed to create user',
         message: error.message || 'Internal server error'
@@ -194,11 +194,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const user = await storage.getUserBySupabaseId(userId);
-      
+
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
-      
+
       res.json(user);
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -210,9 +210,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/companies', async (req, res) => {
     try {
       const { name, email, CNPJ } = req.body;
-      
+
       console.log('Creating company with Supabase direct:', { name, email, cnpj: CNPJ });
-      
+
       if (!name || !email) {
         return res.status(400).json({ error: 'Name and email are required' });
       }
@@ -232,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error) {
         throw error;
       }
-      
+
       res.json(data);
     } catch (error: any) {
       console.error('Error creating company:', error);
@@ -297,10 +297,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/products", authMiddleware, async (req, res) => {
     try {
-      const productData = insertProductSchema.parse({
+      // Clean up empty string values for all numeric fields
+      const cleanedBody = {
         ...req.body,
+        costPrice: req.body.costPrice === "" || req.body.costPrice === null || req.body.costPrice === undefined ? null : req.body.costPrice,
+        maxStock: req.body.maxStock === "" || req.body.maxStock === null || req.body.maxStock === undefined ? null : req.body.maxStock,
+        supplierId: req.body.supplierId === "" || req.body.supplierId === null || req.body.supplierId === undefined || req.body.supplierId === "none" ? null : req.body.supplierId,
+        categoryId: req.body.categoryId === "" || req.body.categoryId === null || req.body.categoryId === undefined || req.body.categoryId === "none" ? null : req.body.categoryId,
         companyId: req.user.companyId
-      });
+      };
+
+      const productData = insertProductSchema.parse(cleanedBody);
       const product = await storage.createProduct(productData);
       res.status(201).json(product);
     } catch (error) {
@@ -348,7 +355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const productId = parseInt(req.params.id);
       const { newStock } = req.body;
-      
+
       if (typeof newStock !== 'number' || newStock < 0) {
         return res.status(400).json({ message: "Invalid stock value" });
       }
@@ -438,7 +445,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const newStock = movementData.type === 'entrada' 
           ? product.currentStock + movementData.quantity
           : product.currentStock - movementData.quantity;
-        
+
         await storage.updateProductStock(movementData.productId, Math.max(0, newStock), req.user.companyId);
       }
 
@@ -576,7 +583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/whatsapp/shopping-list", authMiddleware, async (req, res) => {
     try {
       const lowStockProducts = await storage.getLowStockProducts(req.user.companyId);
-      
+
       // Group products by supplier
       const groupedBySupplier = lowStockProducts.reduce((acc, product) => {
         const supplierName = product.supplier?.name || "Sem Fornecedor";
@@ -688,7 +695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get shopping list data
       const lowStockProducts = await storage.getLowStockProducts(req.user.companyId);
-      
+
       // Group products by supplier
       const groupedBySupplier = lowStockProducts.reduce((acc, product) => {
         const supplierName = product.supplier?.name || "Sem Fornecedor";
@@ -719,7 +726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const currentDate = new Date().toLocaleDateString('pt-BR');
         let supplierMessage = `🛒 PEDIDO DE COMPRAS\n📅 Data: ${currentDate}\n\n`;
         supplierMessage += `Olá! Segue nossa lista de produtos necessários:\n\n`;
-        
+
         products.forEach(product => {
           const quantity = product.minStock * 3; // 3x minimum stock
           supplierMessage += `• ${product.name}\n  Quantidade: ${quantity} ${product.unit}\n  (Estoque atual: ${product.currentStock})\n\n`;
@@ -792,16 +799,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.user) {
         return res.status(401).json({ message: "User not authenticated" });
       }
-      
+
       // MASTER users can see all users, others only see their company users
       console.log("User role:", req.user.role, "Type:", typeof req.user.role);
       const isMaster = req.user.role === 'MASTER';
       console.log("Is MASTER?", isMaster);
-      
+
       const users = isMaster
         ? await storage.getAllUsers()
         : await storage.getUsersByCompany(req.user.companyId);
-        
+
       console.log("Found users:", users.length);
       res.json(users);
     } catch (error) {
@@ -820,11 +827,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Se não foi fornecido supabaseUserId, criar usuário no Supabase primeiro
       if (!userData.supabaseUserId && userData.email && userData.password) {
         console.log('Creating user in Supabase Auth first...');
-        
+
         // TODO: Implementar criação no Supabase
         // Por enquanto, gerar um ID temporário
         userData.supabaseUserId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
+
         // Usar Supabase client direto para contornar RLS
         const { data: user, error } = await supabase
           .from('users')
@@ -842,7 +849,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Supabase error:', error);
           throw error;
         }
-        
+
         res.status(201).json({
           ...user,
           _note: "Usuário criado localmente. Para funcionar completamente, implemente criação no Supabase Auth."
@@ -865,10 +872,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Supabase error:', error);
           throw error;
         }
-        
+
         res.status(201).json(user);
       }
-    } catch (error) {
+    } catch (error){
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });
       }
@@ -1026,11 +1033,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const itemId = parseInt(req.params.id);
       const itemData = insertChecklistItemSchema.partial().parse(req.body);
       const item = await storage.updateChecklistItem(itemId, itemData);
-      
+
       if (!item) {
         return res.status(404).json({ message: "Checklist item not found" });
       }
-      
+
       res.json(item);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1045,11 +1052,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const itemId = parseInt(req.params.id);
       const success = await storage.deleteChecklistItem(itemId);
-      
+
       if (!success) {
         return res.status(404).json({ message: "Checklist item not found" });
       }
-      
+
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting checklist item:", error);
@@ -1125,14 +1132,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get all low stock products
       const lowStockProducts = await storage.getLowStockProducts(companyId);
-      
+
       if (lowStockProducts.length === 0) {
         return res.json({ success: true, suppliers: [] });
       }
 
       // Group products by supplier
       const supplierGroups = new Map();
-      
+
       for (const product of lowStockProducts) {
         if (product.supplier) {
           const supplierId = product.supplier.id;
@@ -1192,7 +1199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Use Drizzle ORM to get clean data from database
       const companiesList = await storage.getAllCompanies();
-      
+
       console.log(`✓ Found ${companiesList.length} companies in database`);
       res.json(companiesList);
     } catch (error) {
@@ -1205,9 +1212,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/master/companies", mockAuth, async (req: any, res) => {
     try {
       const { name, email, phone, cnpj, address } = req.body;
-      
+
       console.log(`📝 Creating new company: ${name}`);
-      
+
       const newCompany = await storage.createCompany({
         name,
         email,
@@ -1218,7 +1225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: true,
         maxUsers: 10
       });
-      
+
       console.log(`✅ Company created with ID: ${newCompany.id}`);
       res.json(newCompany);
     } catch (error) {
@@ -1232,7 +1239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Use Drizzle ORM instead of Supabase client directly to get clean data
       const allUsers = await storage.getAllUsers();
-      
+
       // Transform data to match expected format
       const transformedUsers = allUsers.map(user => ({
         id: user.id,
@@ -1244,7 +1251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: user.createdAt,
         companyName: null // We'll fetch company names separately if needed
       }));
-      
+
       console.log(`✓ Found ${transformedUsers.length} users in database`);
       res.json(transformedUsers);
     } catch (error) {
@@ -1256,23 +1263,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Assign company to Admin user (MASTER only)
   app.post("/api/master/users/:userId/assign-company", authMiddleware, async (req: any, res) => {
     try {
-      
+
       const targetUserId = parseInt(req.params.userId);
       const { companyId, role } = req.body;
-      
+
       if (role === 'MASTER') {
         return res.status(400).json({ error: 'Only MASTER users can assign MASTER role.' });
       }
-      
+
       const updatedUser = await storage.updateUser(targetUserId, {
         companyId,
         role: role || 'admin'
       }, null); // MASTER can update any user
-      
+
       if (!updatedUser) {
         return res.status(404).json({ error: 'User not found' });
       }
-      
+
       res.json(updatedUser);
     } catch (error) {
       console.error("Error assigning company to user:", error);
@@ -1284,15 +1291,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/master/users", mockAuth, async (req: any, res) => {
     try {
       const { email, name, password, companyId, role } = req.body;
-      
+
       console.log(`📝 Creating new user: ${name} (${email}) for company ${companyId}`);
-      
+
       // Validate company exists
       const company = await storage.getCompany(companyId);
       if (!company) {
         return res.status(404).json({ error: 'Company not found' });
       }
-      
+
       // Create user directly in our database (bypassing Supabase Auth for simplicity)
       const newUser = await storage.createUser({
         email,
@@ -1303,7 +1310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         supabaseUserId: `mock-${Date.now()}`, // Mock Supabase ID for development
         isActive: true
       });
-      
+
       console.log(`✅ User created: ${newUser.name} (ID: ${newUser.id})`);
       res.json({
         message: 'User created successfully',

@@ -38,9 +38,10 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const supplierFormSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
-  email: z.string().email("Email inválido").optional().or(z.literal("")),
-  phone: z.string().optional(),
-  address: z.string().optional(),
+  email: z.string().optional().transform((val) => val === "" ? null : val),
+  phone: z.string().optional().transform((val) => val === "" ? null : val),
+  address: z.string().optional().transform((val) => val === "" ? null : val),
+  cnpj: z.string().optional().transform((val) => val === "" ? null : val),
   contact: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -261,7 +262,7 @@ export default function CadastroFornecedores() {
                   {editingSupplier ? "Modifique as informações do fornecedor nos campos abaixo." : "Preencha os campos abaixo para adicionar um novo fornecedor ao sistema."}
                 </DialogDescription>
               </DialogHeader>
-              
+
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                   <FormField
@@ -277,7 +278,7 @@ export default function CadastroFornecedores() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -292,7 +293,7 @@ export default function CadastroFornecedores() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="phone"
@@ -321,7 +322,7 @@ export default function CadastroFornecedores() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="address"
@@ -349,7 +350,7 @@ export default function CadastroFornecedores() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="flex justify-end space-x-4">
                     <Button 
                       type="button" 

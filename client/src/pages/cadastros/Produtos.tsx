@@ -49,10 +49,35 @@ const productFormSchema = z.object({
   unit: z.string().min(1, "Unidade é obrigatória"),
   currentStock: z.number().min(0, "Estoque deve ser positivo").default(0),
   minStock: z.number().min(0, "Estoque mínimo deve ser positivo").default(0),
-  maxStock: z.number().optional(),
-  costPrice: z.string().optional(),
-  supplierId: z.number().optional(),
-  categoryId: z.number().optional(),
+  maxStock: z.union([z.number(), z.string()]).optional().transform((val) => {
+    if (val === "" || val === null || val === undefined) return null;
+    if (typeof val === "string") {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) ? null : parsed;
+    }
+    return val;
+  }),
+  costPrice: z.union([z.string(), z.number()]).optional().transform((val) => {
+    if (val === "" || val === null || val === undefined) return null;
+    if (typeof val === "number") return val.toString();
+    return val;
+  }),
+  supplierId: z.union([z.number(), z.string()]).optional().transform((val) => {
+    if (val === "" || val === null || val === undefined || val === "none") return null;
+    if (typeof val === "string") {
+      const parsed = parseInt(val);
+      return isNaN(parsed) ? null : parsed;
+    }
+    return val;
+  }),
+  categoryId: z.union([z.number(), z.string()]).optional().transform((val) => {
+    if (val === "" || val === null || val === undefined || val === "none") return null;
+    if (typeof val === "string") {
+      const parsed = parseInt(val);
+      return isNaN(parsed) ? null : parsed;
+    }
+    return val;
+  }),
 });
 
 type ProductFormData = z.infer<typeof productFormSchema>;
@@ -98,8 +123,10 @@ export default function CadastroProdutos() {
     mutationFn: (data: ProductFormData) => {
       const processedData = {
         ...data,
-        supplierId: data.supplierId && data.supplierId.toString() !== "none" ? data.supplierId : null,
-        categoryId: data.categoryId && data.categoryId.toString() !== "none" ? data.categoryId : null,
+        costPrice: data.costPrice === "" || data.costPrice === null || data.costPrice === undefined ? null : data.costPrice,
+        maxStock: data.maxStock === "" || data.maxStock === null || data.maxStock === undefined ? null : data.maxStock,
+        supplierId: data.supplierId === "" || data.supplierId === null || data.supplierId === undefined || data.supplierId === "none" ? null : data.supplierId,
+        categoryId: data.categoryId === "" || data.categoryId === null || data.categoryId === undefined || data.categoryId === "none" ? null : data.categoryId,
       };
       return apiRequest("POST", "/api/products", processedData);
     },
@@ -126,8 +153,10 @@ export default function CadastroProdutos() {
     mutationFn: ({ id, data }: { id: number; data: Partial<ProductFormData> }) => {
       const processedData = {
         ...data,
-        supplierId: data.supplierId && data.supplierId.toString() !== "none" ? data.supplierId : null,
-        categoryId: data.categoryId && data.categoryId.toString() !== "none" ? data.categoryId : null,
+        costPrice: data.costPrice === "" || data.costPrice === null || data.costPrice === undefined ? null : data.costPrice,
+        maxStock: data.maxStock === "" || data.maxStock === null || data.maxStock === undefined ? null : data.maxStock,
+        supplierId: data.supplierId === "" || data.supplierId === null || data.supplierId === undefined || data.supplierId === "none" ? null : data.supplierId,
+        categoryId: data.categoryId === "" || data.categoryId === null || data.categoryId === undefined || data.categoryId === "none" ? null : data.categoryId,
       };
       return apiRequest("PUT", `/api/products/${id}`, processedData);
     },
@@ -281,7 +310,7 @@ export default function CadastroProdutos() {
                   {editingProduct ? "Modifique as informações do produto nos campos abaixo." : "Preencha os campos abaixo para adicionar um novo produto ao estoque."}
                 </DialogDescription>
               </DialogHeader>
-              
+
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -298,7 +327,7 @@ export default function CadastroProdutos() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="unit"
@@ -324,7 +353,7 @@ export default function CadastroProdutos() {
                       )}
                     />
                   </div>
-                  
+
                   <FormField
                     control={form.control}
                     name="description"
@@ -338,7 +367,7 @@ export default function CadastroProdutos() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="grid grid-cols-3 gap-4">
                     <FormField
                       control={form.control}
@@ -357,7 +386,7 @@ export default function CadastroProdutos() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="minStock"
@@ -375,7 +404,7 @@ export default function CadastroProdutos() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="maxStock"
@@ -394,7 +423,7 @@ export default function CadastroProdutos() {
                       )}
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -424,7 +453,7 @@ export default function CadastroProdutos() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="categoryId"
@@ -473,7 +502,7 @@ export default function CadastroProdutos() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="flex justify-end space-x-4">
                     <Button 
                       type="button" 
