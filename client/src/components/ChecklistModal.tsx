@@ -41,12 +41,12 @@ export default function ChecklistModal({ open, onClose }: ChecklistModalProps) {
   });
 
   const selectedTemplate = Array.isArray(templates) ? templates.find((t: any) => t.type === selectedType) : null;
-  
+
   const { data: templateItems } = useQuery({
     queryKey: ["/api/checklists/templates", selectedTemplate?.id, "items"],
     enabled: open && !!selectedTemplate?.id,
   });
-  
+
   const currentExecution = Array.isArray(executions) ? executions.find((e: any) => 
     e.template?.type === selectedType && !e.isCompleted
   ) : null;
@@ -147,7 +147,7 @@ export default function ChecklistModal({ open, onClose }: ChecklistModalProps) {
             Gerencie checklists operacionais para abertura, fechamento e limpeza.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="flex h-96">
           {/* Sidebar with checklist types */}
           <div className="w-1/3 border-r border-border p-4 bg-muted/30">
@@ -168,7 +168,7 @@ export default function ChecklistModal({ open, onClose }: ChecklistModalProps) {
               ))}
             </div>
           </div>
-          
+
           {/* Main content */}
           <div className="flex-1 p-6 overflow-y-auto">
             {!currentExecution && !activeExecution ? (
@@ -188,7 +188,7 @@ export default function ChecklistModal({ open, onClose }: ChecklistModalProps) {
               <div className="space-y-4">
                 {Array.isArray(templateItems) && templateItems.map((item: any) => {
                   const executionItem = currentExecution?.items?.find((ei: any) => ei.itemId === item.id);
-                  
+
                   return (
                     <div key={item.id} className="flex items-start space-x-3 p-3 bg-muted/50 rounded-lg">
                       <Checkbox
@@ -196,13 +196,13 @@ export default function ChecklistModal({ open, onClose }: ChecklistModalProps) {
                         onCheckedChange={(checked) => handleItemToggle(item.id, checked as boolean)}
                         className="mt-1"
                       />
-                      
+
                       <div className="flex-1">
                         <p className="font-medium">{item.title}</p>
                         {item.description && (
                           <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
                         )}
-                        
+
                         <div className="mt-2 flex items-center space-x-2">
                           {item.category && (
                             <Badge variant="outline" className="text-xs">
@@ -220,7 +220,7 @@ export default function ChecklistModal({ open, onClose }: ChecklistModalProps) {
                     </div>
                   );
                 })}
-                
+
                 {/* Progress */}
                 <div className="mt-6 p-4 bg-primary/10 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
@@ -246,7 +246,7 @@ export default function ChecklistModal({ open, onClose }: ChecklistModalProps) {
             )}
           </div>
         </div>
-        
+
         {(currentExecution || activeExecution) && (
           <div className="flex items-center justify-between pt-4 border-t border-border">
             <div className="flex items-center space-x-4">
@@ -260,7 +260,7 @@ export default function ChecklistModal({ open, onClose }: ChecklistModalProps) {
                 por João Silva
               </span>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <Button variant="outline">
                 Salvar Progresso
