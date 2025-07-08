@@ -295,7 +295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products", authMiddleware, async (req, res) => {
+  app.post("/api/products", async (req, res) => {
     try {
       const productData = insertProductSchema.parse({
         ...req.body,
@@ -312,7 +312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/products/:id", authMiddleware, async (req, res) => {
+  app.put("/api/products/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const productData = insertProductSchema.partial().parse(req.body);
@@ -330,7 +330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/products/:id", authMiddleware, async (req, res) => {
+  app.delete("/api/products/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteProduct(id, req.user.companyId);
@@ -344,7 +344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/products/:id/stock", authMiddleware, async (req, res) => {
+  app.put("/api/products/:id/stock", async (req, res) => {
     try {
       const productId = parseInt(req.params.id);
       const { newStock } = req.body;
@@ -405,7 +405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/movements/product/:productId", authMiddleware, async (req, res) => {
+  app.get("/api/movements/product/:productId", async (req, res) => {
     try {
       const productId = parseInt(req.params.productId);
       const movements = await storage.getStockMovementsByProduct(productId, req.user.companyId);
@@ -416,7 +416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/movements", authMiddleware, async (req, res) => {
+  app.post("/api/movements", async (req, res) => {
     try {
       // Clean up empty string values for numeric fields
       const cleanedBody = {
@@ -463,7 +463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/suppliers", authMiddleware, async (req, res) => {
+  app.post("/api/suppliers", async (req, res) => {
     try {
       const supplierData = insertSupplierSchema.parse({
         ...req.body,
@@ -480,7 +480,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/suppliers/:id", authMiddleware, async (req, res) => {
+  app.put("/api/suppliers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const supplierData = insertSupplierSchema.partial().parse(req.body);
@@ -498,7 +498,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/suppliers/:id", authMiddleware, async (req, res) => {
+  app.delete("/api/suppliers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteSupplier(id, req.user.companyId);
@@ -523,7 +523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/categories", authMiddleware, async (req, res) => {
+  app.post("/api/categories", async (req, res) => {
     try {
       const categoryData = insertCategorySchema.parse({
         ...req.body,
@@ -540,7 +540,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/categories/:id", authMiddleware, async (req, res) => {
+  app.put("/api/categories/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const categoryData = insertCategorySchema.partial().parse(req.body);
@@ -558,7 +558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/categories/:id", authMiddleware, async (req, res) => {
+  app.delete("/api/categories/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteCategory(id, req.user.companyId);
@@ -573,7 +573,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // WhatsApp list generation
-  app.get("/api/whatsapp/shopping-list", authMiddleware, async (req, res) => {
+  app.get("/api/whatsapp/shopping-list", async (req, res) => {
     try {
       const lowStockProducts = await storage.getLowStockProducts(req.user.companyId);
       
@@ -610,7 +610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send WhatsApp message directly via Business API
-  app.post("/api/whatsapp/send-message", authMiddleware, async (req, res) => {
+  app.post("/api/whatsapp/send-message", async (req, res) => {
     try {
       const { phoneNumber, message, type = "text" } = req.body;
 
@@ -678,7 +678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send shopping list to multiple suppliers via WhatsApp
-  app.post("/api/whatsapp/send-shopping-list", authMiddleware, async (req, res) => {
+  app.post("/api/whatsapp/send-shopping-list", async (req, res) => {
     try {
       const { suppliers } = req.body; // Array of { phoneNumber, supplierName }
 
@@ -881,7 +881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/users/:id", authMiddleware, async (req, res) => {
+  app.put("/api/users/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const userData = insertUserSchema.partial().parse(req.body);
@@ -899,7 +899,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/users/:id", authMiddleware, async (req, res) => {
+  app.delete("/api/users/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteUser(id, req.user.companyId);
@@ -946,7 +946,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/checklists/executions", authMiddleware, async (req, res) => {
+  app.post("/api/checklists/executions", async (req, res) => {
     try {
       const executionData = insertChecklistExecutionSchema.parse({
         ...req.body,
@@ -976,7 +976,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/checklists/executions/:id/items/:itemId", authMiddleware, async (req, res) => {
+  app.put("/api/checklists/executions/:id/items/:itemId", async (req, res) => {
     try {
       const executionId = parseInt(req.params.id);
       const itemId = parseInt(req.params.itemId);
@@ -990,7 +990,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/checklists/executions/:id/complete", authMiddleware, async (req, res) => {
+  app.put("/api/checklists/executions/:id/complete", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const execution = await storage.updateChecklistExecution(id, {

@@ -68,7 +68,7 @@ export default function WhatsAppModal({ open, onClose }: WhatsAppModalProps) {
         title: "Lista copiada!",
         description: "A lista foi copiada para a área de transferência.",
       });
-
+      
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       toast({
