@@ -8,17 +8,16 @@ import { devLogoutAndClearCache } from '@/lib/devUtils';
 
 export function DevModeManager() {
   useEffect(() => {
-    // Detectar mudanças no sistema através de hot reload
-    if (process.env.NODE_ENV === 'development') {
-      // Verificar se há flag de reset no sessionStorage
-      const shouldReset = sessionStorage.getItem('dev_reset_pending');
-      
-      if (shouldReset) {
-        console.log('🔄 [DEV] Reset pendente detectado - executando limpeza...');
-        sessionStorage.removeItem('dev_reset_pending');
-        devLogoutAndClearCache();
-      }
-    }
+    // Disabled automatic reset to prevent loops
+    // if (process.env.NODE_ENV === 'development') {
+    //   const shouldReset = sessionStorage.getItem('dev_reset_pending');
+    //   
+    //   if (shouldReset) {
+    //     console.log('🔄 [DEV] Reset pendente detectado - executando limpeza...');
+    //     sessionStorage.removeItem('dev_reset_pending');
+    //     devLogoutAndClearCache();
+    //   }
+    // }
   }, []);
 
   return null; // Componente invisível
